@@ -15,9 +15,17 @@ namespace NonJobAppointment.WebApi.Controllers
         }
 
         [HttpPut]
-        public IActionResult Get()
+        public IActionResult Create()
         {
             throw new NotImplementedException();
+        }
+
+        [HttpGet]
+        public IActionResult Get(DateOnly from, DateOnly to)
+        {
+            IEnumerable<ViewModel.Appointment> appointments = null!;
+
+            return Ok(appointments);
         }
     }
 }
