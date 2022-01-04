@@ -29,6 +29,7 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpGet]
         public IActionResult Get(Guid calendarId, DateOnly from, DateOnly to)
         {
+            // TODO: move this to a query handler
             Calendar calendar = this.calendarRepo.Get(calendarId, from, to);
 
             IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> appointments = 
