@@ -71,6 +71,9 @@ public class Calendar
         }
     }
 
+    private static ArgumentException RecurringAppointmentAlreadyExists(Guid id)
+        => new($"Recurring appointment with Id={id} already exists.");
+
     private class RecurringAppointmentEqualityComparer : IEqualityComparer<RecurringAppointment>
     {
         public bool Equals(RecurringAppointment? left, RecurringAppointment? right)
@@ -91,7 +94,4 @@ public class Calendar
         public int GetHashCode([DisallowNull] RecurringAppointment recurringAppointment)
             => EqualityComparer<Guid>.Default.GetHashCode(recurringAppointment.Id);
     }
-
-    private static ArgumentException RecurringAppointmentAlreadyExists(Guid id)
-        => new($"Recurring appointment with Id={id} already exists.");
 }
