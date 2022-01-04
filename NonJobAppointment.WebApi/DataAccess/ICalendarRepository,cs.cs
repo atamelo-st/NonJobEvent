@@ -1,5 +1,8 @@
-﻿namespace NonJobAppointment.WebApi.DataAccess;
+﻿using NonJobAppointment.Domain;
 
-public interface ICalendarRepository_cs
+namespace NonJobAppointment.WebApi.DataAccess;
+
+public interface ICalendarRepository
 {
+    Calendar Get(Guid calendarId, DateOnly from, DateOnly to);
 }

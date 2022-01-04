@@ -6,8 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\NonJobAppointment.Common\NonJobAppointment.Common.csproj" />
-  </ItemGroup>
-
 </Project>

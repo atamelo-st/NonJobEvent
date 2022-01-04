@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using NonJobAppointment.Common;
 using NonJobAppointment.Domain;
+using NonJobAppointment.WebApi.DataAccess;
 
 namespace NonJobAppointment.WebApi.Controllers
 {
@@ -7,11 +9,15 @@ namespace NonJobAppointment.WebApi.Controllers
     [Route("[controller]")]
     public class NonJobAppointmentController : ControllerBase
     {
-        private readonly ILogger<NonJobAppointmentController> _logger;
+        private readonly ICalendarRepository calendarRepo;
+        private readonly ILogger<NonJobAppointmentController> logger;
 
-        public NonJobAppointmentController(ILogger<NonJobAppointmentController> logger)
+        public NonJobAppointmentController(
+            ICalendarRepository calendarRepo,
+            ILogger<NonJobAppointmentController> logger)
         {
-            _logger = logger;
+            this.calendarRepo = calendarRepo;
+            this.logger = logger;
         }
 
         [HttpPut]
@@ -21,11 +27,35 @@ namespace NonJobAppointment.WebApi.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(DateOnly from, DateOnly to)
+        public IActionResult Get(Guid calendarId, DateOnly from, DateOnly to)
         {
-            IEnumerable<ViewModel.Appointment> appointments = null!;
+            Calendar calendar = this.calendarRepo.Get(calendarId, from, to);
 
-            return Ok(appointments);
+            IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> appointments = 
+                calendar
+                    .GetAppointments()
+                    .ToList();
+
+            IEnumerable<ViewModel.Appointment> appointmentViewModels =
+                appointments
+                    .Select(appointment =>
+                        appointment.TheOne switch
+                        {
+                            OneOffAppointment oneOff => OneOffViewModel(from: oneOff),
+                            RecurringAppointment.Occurrence occurrence => OccurrenceViewModel(from: occurrence),
+                            _ => throw BadMatch.ShouldNotHappen(),
+                        })
+                    .ToList();
+
+            return Ok(appointmentViewModels);
+
+            static ViewModel.Appointment OneOffViewModel(OneOffAppointment from)
+                => new ViewModel.Appointment.OneOff(from.Id, from.Title, from.Summary, from.Date, from.TechnicianId, from.TimeseetCode,
+                    from.TimeFrame.IsAllDay, from.TimeFrame.StartTime, from.TimeFrame.EndTime);
+
+            static ViewModel.Appointment OccurrenceViewModel(RecurringAppointment.Occurrence from)
+                => new ViewModel.Appointment.RecurringOccurrence(from.Parent.Id, from.Parent.Title, from.Summary, from.Date, from.Parent.TechnicianId,
+                    from.Parent.TimeseetCode, from.TimeFrame.IsAllDay, from.TimeFrame.StartTime, from.TimeFrame.EndTime);
         }
     }
 }

@@ -6,7 +6,7 @@ public abstract record ViewModel
     {
         public record OneOff(
             Guid Id,
-            string Name,
+            string Title,
             string Summary,
             DateOnly Date,
             long TechnicianId,
@@ -18,7 +18,7 @@ public abstract record ViewModel
 
         public record RecurringOccurrence(
             Guid ParentId,
-            string Name,
+            string Title,
             string Summary,
             DateOnly Date,
             long TechnicianId,
