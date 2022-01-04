@@ -1,11 +1,15 @@
 ﻿using NonJobAppointment.Common;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NonJobAppointment.Domain;
 
 public class Calendar
 {
+    private static readonly RecurringAppointmentEqualityComparer recurringAppointmentEqualityComparer = new();
+
     private readonly IReadOnlyList<OneOffAppointment> oneOffappointments;
-    private readonly IReadOnlyList<RecurringAppointment> recurringAppointments;
+    private readonly HashSet<RecurringAppointment> recurringAppointments;
 
     public Guid Id { get; }
     public DateOnly DateFrom { get; }
@@ -21,11 +25,27 @@ public class Calendar
     {
         ArgumentNullException.ThrowIfNull(oneOffappointments, nameof(oneOffappointments));
         ArgumentNullException.ThrowIfNull(recurringAppointments, nameof(recurringAppointments));
+
         this.Id = id;
         this.DateFrom = dateFrom;
         this.DateTo = dateTo;
         this.oneOffappointments = oneOffappointments;
-        this.recurringAppointments = recurringAppointments;
+        this.recurringAppointments = BuildRecurringAppointmentIndex(recurringAppointments);
+
+        static HashSet<RecurringAppointment> BuildRecurringAppointmentIndex(IReadOnlyList<RecurringAppointment> recurringAppointments)
+        {
+            HashSet<RecurringAppointment> index = new(recurringAppointments.Count, recurringAppointmentEqualityComparer);
+
+            foreach (RecurringAppointment recurringAppointment in recurringAppointments)
+            {
+                if (index.Add(recurringAppointment) is not true)
+                {
+                    throw RecurringAppointmentAlreadyExists(id: recurringAppointment.Id);
+                }
+            }
+
+            return index;
+        }
     }
 
     public IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> GetAppointments()
@@ -50,4 +70,28 @@ public class Calendar
             }
         }
     }
+
+    private class RecurringAppointmentEqualityComparer : IEqualityComparer<RecurringAppointment>
+    {
+        public bool Equals(RecurringAppointment? left, RecurringAppointment? right)
+        {
+            if (object.ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            if (left is null || right is null)
+            {
+                return false;
+            }
+
+            return left.Id == right.Id;
+        }
+
+        public int GetHashCode([DisallowNull] RecurringAppointment recurringAppointment)
+            => EqualityComparer<Guid>.Default.GetHashCode(recurringAppointment.Id);
+    }
+
+    private static ArgumentException RecurringAppointmentAlreadyExists(Guid id)
+        => new($"Recurring appointment with Id={id} already exists.");
 }
