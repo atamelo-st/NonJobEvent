@@ -6,19 +6,19 @@ namespace NonJobAppointment.Domain;
 
 public class Calendar
 {
-    private static readonly RecurringAppointmentEqualityComparer recurringAppointmentEqualityComparer = new();
+    private static readonly AppointmentEqualityComparer appointmentEqualityComparer = new();
 
-    private readonly IReadOnlyList<OneOffAppointment> oneOffappointments;
+    private readonly HashSet<OneOffAppointment> oneOffappointments;
     private readonly HashSet<RecurringAppointment> recurringAppointments;
 
     public Guid Id { get; }
-    public DateOnly DateFrom { get; }
-    public DateOnly DateTo { get; }
+    public DateOnly UtcDateFrom { get; }
+    public DateOnly UtcDateTo { get; }
 
     public Calendar(
         Guid id,
-        DateOnly dateFrom,
-        DateOnly dateTo,
+        DateOnly utcDateFrom,
+        DateOnly utcDateTo,
         IReadOnlyList<OneOffAppointment> oneOffappointments,
         IReadOnlyList<RecurringAppointment> recurringAppointments
     )
@@ -27,21 +27,22 @@ public class Calendar
         ArgumentNullException.ThrowIfNull(recurringAppointments, nameof(recurringAppointments));
 
         this.Id = id;
-        this.DateFrom = dateFrom;
-        this.DateTo = dateTo;
-        this.oneOffappointments = oneOffappointments;
-        this.recurringAppointments = BuildRecurringAppointmentIndex(recurringAppointments);
+        this.UtcDateFrom = utcDateFrom;
+        this.UtcDateTo = utcDateTo;
+        this.oneOffappointments = BuildAppointmentIndex(oneOffappointments, AddAppointment);
+        this.recurringAppointments = BuildAppointmentIndex(recurringAppointments, AddAppointment);
 
-        static HashSet<RecurringAppointment> BuildRecurringAppointmentIndex(IReadOnlyList<RecurringAppointment> recurringAppointments)
+        static HashSet<TAppointment> BuildAppointmentIndex<TAppointment>(
+            IReadOnlyList<TAppointment> appointments,
+            Func<HashSet<TAppointment>, TAppointment, bool, bool> add) where TAppointment : Appointment
         {
-            HashSet<RecurringAppointment> index = new(recurringAppointments.Count, recurringAppointmentEqualityComparer);
+            HashSet<TAppointment> index = new(appointments.Count, appointmentEqualityComparer);
 
-            foreach (RecurringAppointment recurringAppointment in recurringAppointments)
+            foreach (TAppointment appointment in appointments)
             {
-                if (index.Add(recurringAppointment) is not true)
-                {
-                    throw RecurringAppointmentAlreadyExists(id: recurringAppointment.Id);
-                }
+                const bool throwOnDuplicates = true;
+
+                add(index, appointment, throwOnDuplicates);
             }
 
             return index;
@@ -49,9 +50,29 @@ public class Calendar
     }
 
     public IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> GetAppointments()
-        => this.GetAppointments(this.DateFrom, this.DateTo);
+        => this.GetAppointments(this.UtcDateFrom, this.UtcDateTo);
 
-    // TODO: do we really need the override taking in dates??
+    public bool AddOneOffAppointment(OneOffAppointment oneOffAppointment)
+        => AddAppointment(this.oneOffappointments, oneOffAppointment, throwOnDuplicates: false);
+
+    public bool AddRecurringAppointment(RecurringAppointment recurringAppointment)
+        => AddAppointment(this.recurringAppointments, recurringAppointment, throwOnDuplicates: false);
+
+    private static bool AddAppointment<TAppointment>(
+        HashSet<TAppointment> appointments,
+        TAppointment appointment,
+        bool throwOnDuplicates) where TAppointment : Appointment
+    {
+        bool added = appointments.Add(appointment);
+
+        if (added is not true && throwOnDuplicates)
+        {
+            throw AppointmentAlreadyExists(appointment.Id);
+        }
+
+        return added;
+    }
+
     private IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> GetAppointments(DateOnly from, DateOnly to)
     {
         foreach (OneOffAppointment oneOff in this.oneOffappointments)
@@ -71,12 +92,12 @@ public class Calendar
         }
     }
 
-    private static ArgumentException RecurringAppointmentAlreadyExists(Guid id)
-        => new($"Recurring appointment with Id={id} already exists.");
+    private static ArgumentException AppointmentAlreadyExists(Guid id)
+        => new($"An appointment with Id={id} already exists.");
 
-    private class RecurringAppointmentEqualityComparer : IEqualityComparer<RecurringAppointment>
+    private class AppointmentEqualityComparer : IEqualityComparer<Appointment>
     {
-        public bool Equals(RecurringAppointment? left, RecurringAppointment? right)
+        public bool Equals(Appointment? left, Appointment? right)
         {
             if (object.ReferenceEquals(left, right))
             {
@@ -92,7 +113,7 @@ public class Calendar
         }
 
         // NOTE: might need EqualityComparer<T>.Default for types other than Guid (e.g. for enums);
-        public int GetHashCode([DisallowNull] RecurringAppointment recurringAppointment)
-            => recurringAppointment.Id.GetHashCode();
+        public int GetHashCode([DisallowNull] Appointment appointment)
+            => appointment.Id.GetHashCode();
     }
 }
