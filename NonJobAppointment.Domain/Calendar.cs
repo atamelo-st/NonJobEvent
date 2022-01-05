@@ -52,7 +52,7 @@ public class Calendar
         => this.GetAppointments(this.DateFrom, this.DateTo);
 
     // TODO: do we really need the override taking in dates??
-    public IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> GetAppointments(DateOnly from, DateOnly to)
+    private IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> GetAppointments(DateOnly from, DateOnly to)
     {
         foreach (OneOffAppointment oneOff in this.oneOffappointments)
         {
@@ -91,7 +91,8 @@ public class Calendar
             return left.Id == right.Id;
         }
 
+        // NOTE: might need EqualityComparer<T>.Default for types other than Guid (e.g. for enums);
         public int GetHashCode([DisallowNull] RecurringAppointment recurringAppointment)
-            => EqualityComparer<Guid>.Default.GetHashCode(recurringAppointment.Id);
+            => recurringAppointment.Id.GetHashCode();
     }
 }
