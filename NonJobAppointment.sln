@@ -7,15 +7,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{755B5DCB-A3E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent", "src\NonJobAppointment\NonJobEvent.csproj", "{AB863742-49E5-4586-954C-2D2A34E02CA7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presentation", "NonJobAppointment.WebApi\NonJobEvent.Presentation.csproj", "{22D02A69-161E-402D-8641-851350A935F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presentation", "src\NonJobAppointment.WebApi\NonJobEvent.Presentation.csproj", "{22D02A69-161E-402D-8641-851350A935F5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Domain", "NonJobAppointment.Domain\NonJobEvent.Domain.csproj", "{A23B687E-96C7-4F64-99B4-F20342F43314}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Domain", "src\NonJobAppointment.Domain\NonJobEvent.Domain.csproj", "{A23B687E-96C7-4F64-99B4-F20342F43314}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Common", "NonJobAppointment.Common\NonJobEvent.Common.csproj", "{931CFB3E-1F1E-4353-91B2-E5BF086AF7EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Common", "src\NonJobAppointment.Common\NonJobEvent.Common.csproj", "{931CFB3E-1F1E-4353-91B2-E5BF086AF7EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NonJobEvent.Application", "NonJobEvent.Application\NonJobEvent.Application.csproj", "{5228B100-2585-4DAC-B0A1-DF59F7CE84A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Application", "src\NonJobEvent.Application\NonJobEvent.Application.csproj", "{5228B100-2585-4DAC-B0A1-DF59F7CE84A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NonJobEvent.Presenation.Api", "NonJobEvent.Presenation.Api\NonJobEvent.Presenation.Api.csproj", "{C575439F-68DB-4FAD-BCB5-62B763B17576}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presenation.Api", "src\NonJobEvent.Presenation.Api\NonJobEvent.Presenation.Api.csproj", "{C575439F-68DB-4FAD-BCB5-62B763B17576}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,6 +55,8 @@ Global
 		{AB863742-49E5-4586-954C-2D2A34E02CA7} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
 		{22D02A69-161E-402D-8641-851350A935F5} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
 		{A23B687E-96C7-4F64-99B4-F20342F43314} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
+		{931CFB3E-1F1E-4353-91B2-E5BF086AF7EC} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
+		{5228B100-2585-4DAC-B0A1-DF59F7CE84A2} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
 		{C575439F-68DB-4FAD-BCB5-62B763B17576} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
