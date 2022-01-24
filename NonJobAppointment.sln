@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent", "src\NonJobAppointment\NonJobEvent.csproj", "{AB863742-49E5-4586-954C-2D2A34E02CA7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent", "src\NonJobEvent\NonJobEvent.csproj", "{AB863742-49E5-4586-954C-2D2A34E02CA7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presentation", "src\NonJobAppointment.WebApi\NonJobEvent.Presentation.csproj", "{22D02A69-161E-402D-8641-851350A935F5}"
 EndProject
