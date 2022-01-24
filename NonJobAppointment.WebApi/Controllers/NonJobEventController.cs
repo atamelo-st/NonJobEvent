@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using NonJobAppointment.Common;
-using NonJobAppointment.Domain;
-using NonJobAppointment.WebApi.DataAccess;
 using NonJobEvent.Application;
+using NonJobEvent.Common;
+using NonJobEvent.Domain;
+using NonJobEvent.Presenation.Api.DataAccess;
 
 namespace NonJobAppointment.WebApi.Controllers
 {

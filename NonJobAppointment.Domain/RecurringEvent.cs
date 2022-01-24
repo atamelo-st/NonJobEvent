@@ -1,4 +1,4 @@
-﻿namespace NonJobAppointment.Domain;
+﻿namespace NonJobEvent.Domain;
 
 public sealed record RecurringEvent : Event
 {
@@ -34,8 +34,8 @@ public sealed record RecurringEvent : Event
         public string Title { get; }
         public string Summary { get; }
         public TimeFrame TimeFrame { get; }
-        public RecurringEvent Parent => this.Id.Parent;
-        public DateOnly Date => this.Id.Date;
+        public RecurringEvent Parent => Id.Parent;
+        public DateOnly Date => Id.Date;
 
         internal Occurrence(Key id, string title, string summary, TimeFrame timeFrame)
         {

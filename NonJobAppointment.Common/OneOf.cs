@@ -1,6 +1,6 @@
-﻿namespace NonJobAppointment.Common;
+﻿namespace NonJobEvent.Common;
 
-public readonly record struct OneOf<TFirst, TSecond> 
+public readonly record struct OneOf<TFirst, TSecond>
     where TFirst : class
     where TSecond : class
 {
@@ -9,15 +9,15 @@ public readonly record struct OneOf<TFirst, TSecond>
     public OneOf(TFirst first)
     {
         ArgumentNullException.ThrowIfNull(first, nameof(first));
-       
-        this.TheOne = first;
+
+        TheOne = first;
     }
 
     public OneOf(TSecond second)
     {
         ArgumentNullException.ThrowIfNull(second, nameof(second));
 
-        this.TheOne = second;
+        TheOne = second;
     }
 
 
@@ -41,7 +41,7 @@ public readonly record struct Those<T> where T : class
     {
         ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-        this.Item = item;
+        Item = item;
     }
 }
 

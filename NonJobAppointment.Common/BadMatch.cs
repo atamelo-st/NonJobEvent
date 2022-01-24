@@ -1,4 +1,4 @@
-﻿namespace NonJobAppointment.Common;
+﻿namespace NonJobEvent.Common;
 
 public static class BadMatch
 {

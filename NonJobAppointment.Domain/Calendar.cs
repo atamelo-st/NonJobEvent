@@ -1,8 +1,8 @@
-﻿using NonJobAppointment.Common;
+﻿using NonJobEvent.Common;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace NonJobAppointment.Domain;
+namespace NonJobEvent.Domain;
 
 public class Calendar
 {
@@ -26,9 +26,9 @@ public class Calendar
         ArgumentNullException.ThrowIfNull(oneOffappointments, nameof(oneOffappointments));
         ArgumentNullException.ThrowIfNull(recurringAppointments, nameof(recurringAppointments));
 
-        this.Id = id;
-        this.UtcDateFrom = utcDateFrom;
-        this.UtcDateTo = utcDateTo;
+        Id = id;
+        UtcDateFrom = utcDateFrom;
+        UtcDateTo = utcDateTo;
         this.oneOffappointments = BuildAppointmentIndex(oneOffappointments, AddAppointment);
         this.recurringAppointments = BuildAppointmentIndex(recurringAppointments, AddAppointment);
 
@@ -50,13 +50,13 @@ public class Calendar
     }
 
     public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetAppointments()
-        => this.GetAppointments(this.UtcDateFrom, this.UtcDateTo);
+        => GetAppointments(UtcDateFrom, UtcDateTo);
 
     public bool AddOneOffAppointment(OneOffEvent oneOffAppointment)
-        => AddAppointment(this.oneOffappointments, oneOffAppointment, throwOnDuplicates: false);
+        => AddAppointment(oneOffappointments, oneOffAppointment, throwOnDuplicates: false);
 
     public bool AddRecurringAppointment(RecurringEvent recurringAppointment)
-        => AddAppointment(this.recurringAppointments, recurringAppointment, throwOnDuplicates: false);
+        => AddAppointment(recurringAppointments, recurringAppointment, throwOnDuplicates: false);
 
     private static bool AddAppointment<TAppointment>(
         HashSet<TAppointment> appointments,
@@ -75,13 +75,13 @@ public class Calendar
 
     private IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetAppointments(DateOnly from, DateOnly to)
     {
-        foreach (OneOffEvent oneOff in this.oneOffappointments)
+        foreach (OneOffEvent oneOff in oneOffappointments)
         {
             yield return OneOf.Those(oneOff);
         }
 
         // TODO: add overrides, deletes
-        foreach (RecurringEvent recurring in this.recurringAppointments)
+        foreach (RecurringEvent recurring in recurringAppointments)
         {
             IEnumerable<RecurringEvent.Occurrence> occurrences = recurring.ExpandOccurrences(from, to);
 
@@ -99,7 +99,7 @@ public class Calendar
     {
         public bool Equals(Event? left, Event? right)
         {
-            if (object.ReferenceEquals(left, right))
+            if (ReferenceEquals(left, right))
             {
                 return true;
             }

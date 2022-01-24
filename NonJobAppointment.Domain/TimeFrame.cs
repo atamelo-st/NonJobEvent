@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace NonJobAppointment.Domain;
+namespace NonJobEvent.Domain;
 
 public sealed class TimeFrame
 {
@@ -10,13 +10,13 @@ public sealed class TimeFrame
     private readonly TimeOnly? startTime;
     private readonly TimeOnly? endTime;
 
-    public TimeOnly StartTime => this.IsAllDay is false ? this.startTime.Value : throw CantGetTimeForAllDayEvent();
+    public TimeOnly StartTime => IsAllDay is false ? startTime.Value : throw CantGetTimeForAllDayEvent();
 
     // TODO: track as a 'Duration' instead of time?
-    public TimeOnly EndTime => this.IsAllDay is false ? this.endTime.Value : throw CantGetTimeForAllDayEvent();
+    public TimeOnly EndTime => IsAllDay is false ? endTime.Value : throw CantGetTimeForAllDayEvent();
 
     [MemberNotNullWhen(false, nameof(startTime), nameof(endTime))]
-    public bool IsAllDay => this.startTime is null && this.endTime is null;
+    public bool IsAllDay => startTime is null && endTime is null;
 
     public static TimeFrame From(TimeOnly startTime, TimeOnly endTime)
     {

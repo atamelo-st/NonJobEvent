@@ -1,4 +1,4 @@
-﻿namespace NonJobAppointment.Domain;
+﻿namespace NonJobEvent.Domain;
 
 public abstract record Event
 {

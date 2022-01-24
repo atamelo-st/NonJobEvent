@@ -1,6 +1,6 @@
-﻿using NonJobAppointment.Domain;
+﻿using NonJobEvent.Domain;
 
-namespace NonJobAppointment.WebApi.DataAccess;
+namespace NonJobEvent.Presenation.Api.DataAccess;
 
 public interface ICalendarRepository
 {

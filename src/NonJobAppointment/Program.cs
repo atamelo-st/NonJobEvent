@@ -1,7 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using NonJobAppointment.Domain;
 
 var summary = BenchmarkRunner.Run<BoxingBenchmark>();
 

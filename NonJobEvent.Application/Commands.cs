@@ -1,4 +1,4 @@
-﻿using NonJobAppointment.Domain;
+﻿using NonJobEvent.Domain;
 
 namespace NonJobEvent.Application;
 
