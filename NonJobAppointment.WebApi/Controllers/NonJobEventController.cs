@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using NonJobAppointment.Common;
 using NonJobAppointment.Domain;
 using NonJobAppointment.WebApi.DataAccess;
+using NonJobEvent.Application;
 
 namespace NonJobAppointment.WebApi.Controllers
 {
@@ -27,10 +28,10 @@ namespace NonJobAppointment.WebApi.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(Guid calendarId, DateOnly from, DateOnly to)
+        public IActionResult Get(Queries.GetCalendarEvents query)
         {
             // TODO: move this to a query handler
-            Calendar calendar = this.calendarRepo.GetCalendar(calendarId, from, to);
+            Calendar calendar = this.calendarRepo.GetCalendar(query.calendarId, query.from, query.to);
 
             IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> appointments = 
                 calendar
@@ -61,16 +62,14 @@ namespace NonJobAppointment.WebApi.Controllers
 
 
         [HttpPost]
-        public IActionResult AddOneOffEvent(
-            Guid calendarId,
-            string title,
-            string summary,
-            DateOnly date,
-            TimeOnly? startTime,
-            TimeOnly? endTime,
-            int timesheetCode)
+        public async Task<IActionResult> AddOneOffEvent(
+            Commands.AddOneOffEvent command,
+            [FromServices] CommandHandler<Commands.AddOneOffEvent, bool> addOneOffEvent)
         {
-            throw new NotImplementedException();
+            bool result = await addOneOffEvent(command);
+
+            // TODO: do proper result handling, version propagation, etc
+            return Ok(result);
         }
     }
 }
