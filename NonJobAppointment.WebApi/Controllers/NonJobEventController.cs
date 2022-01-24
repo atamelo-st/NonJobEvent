@@ -61,7 +61,14 @@ namespace NonJobAppointment.WebApi.Controllers
 
 
         [HttpPost]
-        public IActionResult AddOneOffEvent(Guid calendarId)
+        public IActionResult AddOneOffEvent(
+            Guid calendarId,
+            string title,
+            string summary,
+            DateOnly date,
+            TimeOnly? startTime,
+            TimeOnly? endTime,
+            int timesheetCode)
         {
             throw new NotImplementedException();
         }
