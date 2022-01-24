@@ -1,47 +1,42 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NonJobAppointment.Domain;
 
-public readonly record struct TimeFrame
+public sealed class TimeFrame
 {
-    private readonly bool isAllDay;
+    public static readonly TimeFrame AllDay = new();
 
-    public TimeOnly? StartTime { get; }
-    public TimeOnly? EndTime { get; }
-    
-    [MemberNotNullWhen(false, nameof(StartTime), nameof(EndTime))]
-    public bool IsAllDay => this.isAllDay;
+    private readonly TimeOnly? startTime;
+    private readonly TimeOnly? endTime;
 
-    public TimeFrame(TimeOnly? startTime, TimeOnly? endTime)
+    public TimeOnly StartTime => this.IsAllDay is false ? this.startTime.Value : throw CantGetTimeForAllDayEvent();
+
+    // TODO: track as a 'Duration' instead of time?
+    public TimeOnly EndTime => this.IsAllDay is false ? this.endTime.Value : throw CantGetTimeForAllDayEvent();
+
+    [MemberNotNullWhen(false, nameof(startTime), nameof(endTime))]
+    public bool IsAllDay => this.startTime is null && this.endTime is null;
+
+    private TimeFrame()
     {
-        bool isAllDay = CheckStartEndTimes(startTime, endTime);
+        this.startTime = null;
+        this.endTime = null;
 
-        this.StartTime = startTime;
-        this.EndTime = endTime;
-        this.isAllDay = isAllDay;
+        Debug.Assert(IsAllDay);
     }
 
-    public TimeFrame() : this(null, null)
+    public TimeFrame(TimeOnly startTime, TimeOnly endTime)
     {
-    }
-
-    private static bool CheckStartEndTimes(TimeOnly? startTime, TimeOnly? endTime)
-    {
-        bool isAllDay = startTime is null && endTime is null;
-
-        if (isAllDay is not true)
+        if (startTime >= endTime)
         {
-            if (startTime is null || endTime is null)
-            {
-                throw new ArgumentException("For non-all-day events both start and end times should be specified.", $"{nameof(startTime)}, {nameof(endTime)}");
-            }
-
-            if (startTime >= endTime)
-            {
-                throw new ArgumentException("Start time cannot be the same or past the end time.", nameof(startTime));
-            }
+            throw new ArgumentException("Start time cannot be the same or past the end time.", nameof(startTime));
         }
 
-        return isAllDay;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
+
+    private static InvalidOperationException CantGetTimeForAllDayEvent()
+        => new("Can't get time for an all day event.");
 }
