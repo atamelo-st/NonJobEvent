@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent", "src\NonJobEv
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presentation", "src\NonJobAppointment.WebApi\NonJobEvent.Presentation.csproj", "{22D02A69-161E-402D-8641-851350A935F5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Domain", "src\NonJobAppointment.Domain\NonJobEvent.Domain.csproj", "{A23B687E-96C7-4F64-99B4-F20342F43314}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Domain", "src\NonJobEvent.Domain\NonJobEvent.Domain.csproj", "{A23B687E-96C7-4F64-99B4-F20342F43314}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Common", "src\NonJobAppointment.Common\NonJobEvent.Common.csproj", "{931CFB3E-1F1E-4353-91B2-E5BF086AF7EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Common", "src\NonJobEvent.Common\NonJobEvent.Common.csproj", "{931CFB3E-1F1E-4353-91B2-E5BF086AF7EC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Application", "src\NonJobEvent.Application\NonJobEvent.Application.csproj", "{5228B100-2585-4DAC-B0A1-DF59F7CE84A2}"
 EndProject
