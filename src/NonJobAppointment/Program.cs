@@ -3,8 +3,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using NonJobAppointment.Domain;
 
-// var summary = BenchmarkRunner.Run<BoxingBenchmark>();
-Console.WriteLine(TimeFrame.AllDay.StartTime);
+var summary = BenchmarkRunner.Run<BoxingBenchmark>();
 
 [MemoryDiagnoser]
 public class BoxingBenchmark

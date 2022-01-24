@@ -6,6 +6,8 @@ public abstract record Event
     public string Title { get; }
     public string Summary { get; }
     public TimeFrame TimeFrame { get; }
+
+    // TODO: isn't 'Technician' the same as 'Calendar' in this case ?? After all, a calendar exclusively belongs to a technician..
     public long TechnicianId { get; }
     public int TimeseetCode { get; }
 
