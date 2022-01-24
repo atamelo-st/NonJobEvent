@@ -1,6 +1,6 @@
 ﻿namespace NonJobAppointment.Domain;
 
-public abstract record Appointment
+public abstract record Event
 {
     public Guid Id { get; }
     public string Title { get; }
@@ -9,7 +9,7 @@ public abstract record Appointment
     public long TechnicianId { get; }
     public int TimeseetCode { get; }
 
-    protected Appointment(
+    protected Event(
         Guid id,
         string title,
         string summary,

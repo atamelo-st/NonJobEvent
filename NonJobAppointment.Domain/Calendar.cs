@@ -8,8 +8,8 @@ public class Calendar
 {
     private static readonly AppointmentEqualityComparer appointmentEqualityComparer = new();
 
-    private readonly HashSet<OneOffAppointment> oneOffappointments;
-    private readonly HashSet<RecurringAppointment> recurringAppointments;
+    private readonly HashSet<OneOffEvent> oneOffappointments;
+    private readonly HashSet<RecurringEvent> recurringAppointments;
 
     public Guid Id { get; }
     public DateOnly UtcDateFrom { get; }
@@ -19,8 +19,8 @@ public class Calendar
         Guid id,
         DateOnly utcDateFrom,
         DateOnly utcDateTo,
-        IReadOnlyList<OneOffAppointment> oneOffappointments,
-        IReadOnlyList<RecurringAppointment> recurringAppointments
+        IReadOnlyList<OneOffEvent> oneOffappointments,
+        IReadOnlyList<RecurringEvent> recurringAppointments
     )
     {
         ArgumentNullException.ThrowIfNull(oneOffappointments, nameof(oneOffappointments));
@@ -34,7 +34,7 @@ public class Calendar
 
         static HashSet<TAppointment> BuildAppointmentIndex<TAppointment>(
             IReadOnlyList<TAppointment> appointments,
-            Func<HashSet<TAppointment>, TAppointment, bool, bool> add) where TAppointment : Appointment
+            Func<HashSet<TAppointment>, TAppointment, bool, bool> add) where TAppointment : Event
         {
             HashSet<TAppointment> index = new(appointments.Count, appointmentEqualityComparer);
 
@@ -49,19 +49,19 @@ public class Calendar
         }
     }
 
-    public IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> GetAppointments()
+    public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetAppointments()
         => this.GetAppointments(this.UtcDateFrom, this.UtcDateTo);
 
-    public bool AddOneOffAppointment(OneOffAppointment oneOffAppointment)
+    public bool AddOneOffAppointment(OneOffEvent oneOffAppointment)
         => AddAppointment(this.oneOffappointments, oneOffAppointment, throwOnDuplicates: false);
 
-    public bool AddRecurringAppointment(RecurringAppointment recurringAppointment)
+    public bool AddRecurringAppointment(RecurringEvent recurringAppointment)
         => AddAppointment(this.recurringAppointments, recurringAppointment, throwOnDuplicates: false);
 
     private static bool AddAppointment<TAppointment>(
         HashSet<TAppointment> appointments,
         TAppointment appointment,
-        bool throwOnDuplicates) where TAppointment : Appointment
+        bool throwOnDuplicates) where TAppointment : Event
     {
         bool added = appointments.Add(appointment);
 
@@ -73,19 +73,19 @@ public class Calendar
         return added;
     }
 
-    private IEnumerable<OneOf<OneOffAppointment, RecurringAppointment.Occurrence>> GetAppointments(DateOnly from, DateOnly to)
+    private IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetAppointments(DateOnly from, DateOnly to)
     {
-        foreach (OneOffAppointment oneOff in this.oneOffappointments)
+        foreach (OneOffEvent oneOff in this.oneOffappointments)
         {
             yield return OneOf.Those(oneOff);
         }
 
         // TODO: add overrides, deletes
-        foreach (RecurringAppointment recurring in this.recurringAppointments)
+        foreach (RecurringEvent recurring in this.recurringAppointments)
         {
-            IEnumerable<RecurringAppointment.Occurrence> occurrences = recurring.ExpandOccurrences(from, to);
+            IEnumerable<RecurringEvent.Occurrence> occurrences = recurring.ExpandOccurrences(from, to);
 
-            foreach (RecurringAppointment.Occurrence occurrence in occurrences)
+            foreach (RecurringEvent.Occurrence occurrence in occurrences)
             {
                 yield return OneOf.Those(occurrence);
             }
@@ -95,9 +95,9 @@ public class Calendar
     private static ArgumentException AppointmentAlreadyExists(Guid id)
         => new($"An appointment with Id={id} already exists.");
 
-    private class AppointmentEqualityComparer : IEqualityComparer<Appointment>
+    private class AppointmentEqualityComparer : IEqualityComparer<Event>
     {
-        public bool Equals(Appointment? left, Appointment? right)
+        public bool Equals(Event? left, Event? right)
         {
             if (object.ReferenceEquals(left, right))
             {
@@ -113,7 +113,7 @@ public class Calendar
         }
 
         // NOTE: might need EqualityComparer<T>.Default for types other than Guid (e.g. for enums);
-        public int GetHashCode([DisallowNull] Appointment appointment)
+        public int GetHashCode([DisallowNull] Event appointment)
             => appointment.Id.GetHashCode();
     }
 }

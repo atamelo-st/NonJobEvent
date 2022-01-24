@@ -2,7 +2,7 @@
 
 public abstract record ViewModel
 {
-    public abstract record Appointment
+    public abstract record Event
     {
         public record OneOff(
             Guid Id,
@@ -14,7 +14,7 @@ public abstract record ViewModel
             bool IsAllDay,
             TimeOnly? StartTime = null,
             TimeOnly? EndTime = null
-        ) : Appointment;
+        ) : Event;
 
         public record RecurringOccurrence(
             Guid ParentId,
@@ -26,7 +26,7 @@ public abstract record ViewModel
             bool IsAllDay,
             TimeOnly? StartTime = null,
             TimeOnly? EndTime = null
-        ) : Appointment;
+        ) : Event;
     }
 
 

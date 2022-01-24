@@ -1,6 +1,6 @@
 ﻿namespace NonJobAppointment.Domain;
 
-public sealed record OneOffAppointment(
+public sealed record OneOffEvent(
         Guid Id,
         string Title,
         string Summary,
@@ -8,4 +8,4 @@ public sealed record OneOffAppointment(
         TimeFrame TimeFrame,
         long TechnicianId,
         int TimeseetCode
-) : Appointment(Id, Title, Summary, TimeFrame, TechnicianId, TimeseetCode);
+) : Event(Id, Title, Summary, TimeFrame, TechnicianId, TimeseetCode);

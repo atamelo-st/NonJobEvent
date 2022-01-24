@@ -1,11 +1,11 @@
 ﻿namespace NonJobAppointment.Domain;
 
-public sealed record RecurringAppointment : Appointment
+public sealed record RecurringEvent : Event
 {
     public DateOnly StartDate { get; }
     public RecurrencePattern Pattern { get; }
 
-    public RecurringAppointment(
+    public RecurringEvent(
         Guid id,
         string title,
         string summary,
@@ -34,7 +34,7 @@ public sealed record RecurringAppointment : Appointment
         public string Title { get; }
         public string Summary { get; }
         public TimeFrame TimeFrame { get; }
-        public RecurringAppointment Parent => this.Id.Parent;
+        public RecurringEvent Parent => this.Id.Parent;
         public DateOnly Date => this.Id.Date;
 
         internal Occurrence(Key id, string title, string summary, TimeFrame timeFrame)
@@ -51,10 +51,10 @@ public sealed record RecurringAppointment : Appointment
 
         public readonly record struct Key
         {
-            public RecurringAppointment Parent { get; }
+            public RecurringEvent Parent { get; }
             public DateOnly Date { get; }
 
-            internal Key(RecurringAppointment parent, DateOnly date)
+            internal Key(RecurringEvent parent, DateOnly date)
             {
                 ArgumentNullException.ThrowIfNull(parent, nameof(parent));
 
@@ -67,7 +67,7 @@ public sealed record RecurringAppointment : Appointment
 
 public class OccurenceGenerator
 {
-    public static IEnumerable<RecurringAppointment.Occurrence> GenerateForPeriod(
+    public static IEnumerable<RecurringEvent.Occurrence> GenerateForPeriod(
         DateOnly from,
         DateOnly to,
         DateOnly startDate,
