@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\NonJobEvent.Domain\NonJobEvent.Domain.csproj" />
     <ProjectReference Include="..\NonJobEvent.Application\NonJobEvent.Application.csproj" />
-    <ProjectReference Include="..\NonJobEvent.Presenation.Api\NonJobEvent.Presenation.Api.csproj" />
+    <ProjectReference Include="..\NonJobEvent.Presentation.Api\NonJobEvent.Presentation.Api.csproj" />
   </ItemGroup>
 
 </Project>

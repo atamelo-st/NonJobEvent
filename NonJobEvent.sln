@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{755B5DCB-A3E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent", "src\NonJobEvent\NonJobEvent.csproj", "{AB863742-49E5-4586-954C-2D2A34E02CA7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presentation", "src\NonJobAppointment.WebApi\NonJobEvent.Presentation.csproj", "{22D02A69-161E-402D-8641-851350A935F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presentation.Http", "src\NonJobEvent.Presentation.Http\NonJobEvent.Presentation.Http.csproj", "{22D02A69-161E-402D-8641-851350A935F5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Domain", "src\NonJobEvent.Domain\NonJobEvent.Domain.csproj", "{A23B687E-96C7-4F64-99B4-F20342F43314}"
 EndProject
@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Common", "src\N
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Application", "src\NonJobEvent.Application\NonJobEvent.Application.csproj", "{5228B100-2585-4DAC-B0A1-DF59F7CE84A2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presenation.Api", "src\NonJobEvent.Presenation.Api\NonJobEvent.Presenation.Api.csproj", "{C575439F-68DB-4FAD-BCB5-62B763B17576}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presentation.Api", "src\NonJobEvent.Presentation.Api\NonJobEvent.Presentation.Api.csproj", "{C575439F-68DB-4FAD-BCB5-62B763B17576}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
