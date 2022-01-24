@@ -31,7 +31,6 @@ public class CalendarCommandQueryHandler :
             command.EventSummary,
             command.EventDate,
             command.EventTimeFrame,
-            command.EventTechnicianId,
             command.EventTimeseetCode
         );
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NonJobEvent.Domain.DomainEvents;
 
-public abstract record DomainEvent
+public abstract partial record DomainEvent
 {
     public Guid Id { get; }
 
@@ -16,5 +16,5 @@ public abstract record DomainEvent
     }
 
     // TODO: consider flattening event payload instead of directly using domain classes
-    public sealed record OneOffEventAdded(OneOffEvent AddedEvent) : DomainEvent;
+    public sealed record OneOffEventAdded(OneOffEvent AddedEvent, Calendar calendar) : DomainEvent;
 }

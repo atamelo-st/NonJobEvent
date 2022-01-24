@@ -65,7 +65,7 @@ public class Calendar
 
         if (added)
         {
-            DomainEvent.OneOffEventAdded oneOffEventAdded = new(oneOffEvent);
+            DomainEvent.OneOffEventAdded oneOffEventAdded = new(oneOffEvent, calendar: this);
 
             this.PublishDomainEvent(oneOffEventAdded);
         }
@@ -121,7 +121,7 @@ public class Calendar
     {
         public bool Equals(Event? left, Event? right)
         {
-            if (ReferenceEquals(left, right))
+            if (object.ReferenceEquals(left, right))
             {
                 return true;
             }

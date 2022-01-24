@@ -3,6 +3,7 @@ using NonJobEvent.Application;
 using NonJobEvent.Common;
 using NonJobEvent.Domain;
 using NonJobEvent.Presenation.Api.DataAccess;
+using NonJobEvent.Presentation.Http.Controllers;
 
 namespace NonJobAppointment.WebApi.Controllers
 {
@@ -31,17 +32,17 @@ namespace NonJobAppointment.WebApi.Controllers
         public async Task<IActionResult> Get(Queries.GetCalendarEvents query)
         {
             // TODO: move this to a query handler
-            Calendar calendar = await this.calendarRepo.GetCalendarAsync(query.calendarId, query.from, query.to);
+            Calendar calendar = await this.calendarRepo.GetCalendarAsync(query.CalendarId, query.From, query.To);
 
-            IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> appointments =
+            IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events =
                 calendar
                     .GetEvents()
                     .ToList();
 
-            IEnumerable<ViewModel.Event> appointmentViewModels =
-                appointments
-                    .Select(appointment =>
-                        appointment.TheOne switch
+            IEnumerable<ViewModel.Event> eventViewModels =
+                events
+                    .Select(@event =>
+                        @event.TheOne switch
                         {
                             OneOffEvent oneOff => OneOffViewModel(from: oneOff),
                             RecurringEvent.Occurrence occurrence => OccurrenceViewModel(from: occurrence),
@@ -49,14 +50,16 @@ namespace NonJobAppointment.WebApi.Controllers
                         })
                     .ToList();
 
-            return Ok(appointmentViewModels);
+            ViewModel.CalendarSlice result = new(query.CalendarId, eventViewModels);
+
+            return Ok(result);
 
             static ViewModel.Event OneOffViewModel(OneOffEvent from)
-                => new ViewModel.Event.OneOff(from.Id, from.Title, from.Summary, from.Date, from.TechnicianId, from.TimeseetCode,
+                => new ViewModel.Event.OneOff(from.Id, from.Title, from.Summary, from.Date, from.TimeseetCode,
                     from.TimeFrame.IsAllDay, from.TimeFrame.StartTime, from.TimeFrame.EndTime);
 
             static ViewModel.Event OccurrenceViewModel(RecurringEvent.Occurrence from)
-                => new ViewModel.Event.RecurringOccurrence(from.Parent.Id, from.Parent.Title, from.Summary, from.Date, from.Parent.TechnicianId,
+                => new ViewModel.Event.RecurringOccurrence(from.Parent.Id, from.Parent.Title, from.Summary, from.Date,
                     from.Parent.TimeseetCode, from.TimeFrame.IsAllDay, from.TimeFrame.StartTime, from.TimeFrame.EndTime);
         }
 

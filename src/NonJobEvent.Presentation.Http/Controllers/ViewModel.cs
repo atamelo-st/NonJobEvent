@@ -1,6 +1,6 @@
-﻿namespace NonJobAppointment.WebApi.Controllers;
+﻿namespace NonJobEvent.Presentation.Http.Controllers;
 
-public abstract record ViewModel
+public abstract partial record ViewModel
 {
     public abstract record Event
     {
@@ -11,7 +11,6 @@ public abstract record ViewModel
             string Title,
             string Summary,
             DateOnly Date,
-            long TechnicianId,
             long TimesheetCodeId,
             bool IsAllDay,
             TimeOnly? StartTime = null,
@@ -23,7 +22,6 @@ public abstract record ViewModel
             string Title,
             string Summary,
             DateOnly Date,
-            long TechnicianId,
             long TimesheetCodeId,
             bool IsAllDay,
             TimeOnly? StartTime = null,
@@ -31,5 +29,5 @@ public abstract record ViewModel
         ) : Event;
     }
 
-
+    public record CalendarSlice(Guid CalendarId, IEnumerable<Event> events) : ViewModel;
 }

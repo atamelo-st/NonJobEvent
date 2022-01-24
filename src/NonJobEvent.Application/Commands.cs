@@ -2,7 +2,7 @@
 
 namespace NonJobEvent.Application;
 
-public static class Commands
+public static partial class Commands
 {
     public sealed record AddOneOffEvent(
         Guid CalenderId,
@@ -11,7 +11,6 @@ public static class Commands
         string EventSummary,
         DateOnly EventDate,
         TimeFrame EventTimeFrame,
-        long EventTechnicianId,
         int EventTimeseetCode
     );
 

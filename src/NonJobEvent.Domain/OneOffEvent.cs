@@ -6,6 +6,5 @@ public sealed record OneOffEvent(
         string Summary,
         DateOnly Date,
         TimeFrame TimeFrame,
-        long TechnicianId,
         int TimeseetCode
-) : Event(Id, Title, Summary, TimeFrame, TechnicianId, TimeseetCode);
+) : Event(Id, Title, Summary, TimeFrame, TimeseetCode);

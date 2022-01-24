@@ -11,9 +11,8 @@ public sealed record RecurringEvent : Event
         string summary,
         DateOnly startDate,
         TimeFrame timeFrame,
-        long technicianId,
         int timeseetCode,
-        RecurrencePattern pattern) : base(id, title, summary, timeFrame, technicianId, timeseetCode)
+        RecurrencePattern pattern) : base(id, title, summary, timeFrame, timeseetCode)
     {
         ArgumentNullException.ThrowIfNull(pattern, nameof(pattern));
 
