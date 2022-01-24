@@ -50,7 +50,7 @@ public sealed class TimeFrame
         if (IsStartTimeBeforeEndTime(startTime.Value, endTime.Value) is false)
         {
             timeFrame = null;
-            errorMessage = ErrorMessages.StartTimePastEndTime;
+            errorMessage = "Start time cannot be the same or past the end time.";
 
             return false;
         }
@@ -78,11 +78,5 @@ public sealed class TimeFrame
     private static bool IsStartTimeBeforeEndTime(TimeOnly startTime, TimeOnly endTime) => startTime < endTime;
 
     private static InvalidOperationException CantGetTimeForAllDayEvent()
-        => new(ErrorMessages.CantGetTimeForAllDayEvent);
-
-    private static class ErrorMessages
-    {
-        public static readonly string CantGetTimeForAllDayEvent = "Can't get time for an all day event.";
-        public static readonly string StartTimePastEndTime = "Start time cannot be the same or past the end time.";
-    }
+        => new("Can't get time for an all day event.");
 }
