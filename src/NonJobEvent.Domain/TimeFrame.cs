@@ -3,24 +3,23 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NonJobEvent.Domain;
 
-public sealed class TimeFrame
+public sealed record TimeFrame
 {
-    public static readonly TimeFrame AllDay = new();
+    public static readonly TimeFrame AllDay = new(isAllDay: true);
 
-    private readonly TimeOnly? startTime;
-    private readonly TimeOnly? endTime;
+    private readonly TimeOnly startTime;
+    private readonly TimeOnly endTime;
+    private readonly TimeSpan duration;
+    private readonly bool isAllDay;
 
-    public TimeOnly StartTime => IsAllDay is false ? startTime.Value : throw CantGetTimeForAllDayEvent();
+    public TimeOnly StartTime => this.IsAllDay ? throw CantGetTimeForAllDayEvent() : startTime;
+    public TimeOnly EndTime => this.IsAllDay ? throw CantGetTimeForAllDayEvent() : endTime;
+    public TimeSpan Duration => this.IsAllDay ? throw CantGetTimeForAllDayEvent() : duration;
+    public bool IsAllDay => this.isAllDay;
 
-    // TODO: track as a 'Duration' instead of time?
-    public TimeOnly EndTime => IsAllDay is false ? endTime.Value : throw CantGetTimeForAllDayEvent();
-
-    [MemberNotNullWhen(false, nameof(startTime), nameof(endTime))]
-    public bool IsAllDay => startTime is null && endTime is null;
-
-    public static TimeFrame From(TimeOnly startTime, TimeOnly endTime)
+    public static TimeFrame From(TimeOnly startTime, uint durationInMinutes)
     {
-        if (TryFrom(startTime, endTime, out var timeFrame, out var errorMessage) is false)
+        if (!TryFrom(startTime, durationInMinutes, out var timeFrame, out var errorMessage))
         {
             throw new ArgumentException(errorMessage);
         }
@@ -29,54 +28,45 @@ public sealed class TimeFrame
     }
 
     public static bool TryFrom(
-        TimeOnly? startTime,
-        TimeOnly? endTime,
-        [NotNullWhen(true)] out TimeFrame? timeFrame) => TryFrom(startTime, endTime, out timeFrame, out _);
+        TimeOnly startTime,
+        uint durationInMinutes,
+        [NotNullWhen(true)] out TimeFrame? timeFrame) => TryFrom(startTime, durationInMinutes, out timeFrame, out _);
 
     public static bool TryFrom(
-        TimeOnly? startTime,
-        TimeOnly? endTime,
+        TimeOnly startTime,
+        uint durationInMinutes,
         [NotNullWhen(true)] out TimeFrame? timeFrame,
         [NotNullWhen(false)] out string? errorMessage)
     {
-        if (startTime is null || endTime is null)
-        {
-            timeFrame = AllDay;
-            errorMessage = null;
+        TimeOnly endTime = startTime.AddMinutes(durationInMinutes, out int wrappedDays);
 
-            return true;
-        }
-
-        if (IsStartTimeBeforeEndTime(startTime.Value, endTime.Value) is false)
+        if (wrappedDays > 0)
         {
             timeFrame = null;
-            errorMessage = "Start time cannot be the same or past the end time.";
+            errorMessage = $"Time frame can't cary over on next day. Start time: {startTime}, duration {durationInMinutes} minutes.";
 
             return false;
         }
 
-        timeFrame = new TimeFrame(startTime.Value, endTime.Value);
+        TimeSpan duration = TimeSpan.FromMinutes(durationInMinutes);
+        timeFrame = new TimeFrame(startTime, endTime, duration);
         errorMessage = null;
 
         return true;
     }
 
-    private TimeFrame()
-    {
-        this.startTime = null;
-        this.endTime = null;
-
-        Debug.Assert(IsAllDay);
-    }
-
-    private TimeFrame(TimeOnly startTime, TimeOnly endTime)
+    private TimeFrame(TimeOnly startTime, TimeOnly endTime, TimeSpan duration)
+    : this(isAllDay: false)
     {
         this.startTime = startTime;
         this.endTime = endTime;
+        this.duration = duration;
     }
 
-    private static bool IsStartTimeBeforeEndTime(TimeOnly startTime, TimeOnly endTime) => startTime < endTime;
+    private TimeFrame(bool isAllDay) => this.isAllDay = isAllDay;
 
+    // TODO: find out business reqs as to what value should the props
+    // have when IsAllDay is true
     private static InvalidOperationException CantGetTimeForAllDayEvent()
         => new("Can't get time for an all day event.");
 }
