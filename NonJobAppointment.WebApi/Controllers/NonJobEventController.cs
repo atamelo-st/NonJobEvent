@@ -27,7 +27,7 @@ namespace NonJobAppointment.WebApi.Controllers
             throw new NotImplementedException();
         }
 
-        [HttpGet]
+        [HttpGet("get-calendar-events")]
         public IActionResult Get(Queries.GetCalendarEvents query)
         {
             // TODO: move this to a query handler
@@ -61,7 +61,7 @@ namespace NonJobAppointment.WebApi.Controllers
         }
 
 
-        [HttpPost]
+        [HttpPost("add-oneoff-event")]
         public async Task<IActionResult> AddOneOffEvent(
             Commands.AddOneOffEvent command,
             [FromServices] CommandHandler<Commands.AddOneOffEvent, bool> addOneOffEvent)
