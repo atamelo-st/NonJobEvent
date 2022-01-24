@@ -34,7 +34,7 @@ public class CalendarCommandQueryHandler :
             command.EventTimeseetCode
         );
 
-        bool added = calendar.AddOneOffAppointment(oneOffEvent);
+        bool added = calendar.AddOneOffEvent(oneOffEvent);
 
         if (added)
         {

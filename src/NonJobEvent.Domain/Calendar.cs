@@ -1,4 +1,5 @@
 ﻿using NonJobEvent.Common;
+using NonJobEvent.Domain.DomainEvents;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -6,39 +7,48 @@ namespace NonJobEvent.Domain;
 
 public class Calendar
 {
-    private static readonly AppointmentEqualityComparer appointmentEqualityComparer = new();
+    private static readonly EventEqualityComparer eventEqualityComparer = new();
 
-    private readonly HashSet<OneOffEvent> oneOffappointments;
-    private readonly HashSet<RecurringEvent> recurringAppointments;
+    private readonly HashSet<OneOffEvent> oneOffEvents;
+    private readonly HashSet<RecurringEvent> recurringEvents;
+
+    private readonly List<DomainEvent> domainEvents;
+
+    public IReadOnlyList<DomainEvent> DomainEvents => this.domainEvents;
 
     public Guid Id { get; }
     public DateOnly UtcDateFrom { get; }
     public DateOnly UtcDateTo { get; }
 
+
+
     public Calendar(
         Guid id,
         DateOnly utcDateFrom,
         DateOnly utcDateTo,
-        IReadOnlyList<OneOffEvent> oneOffappointments,
-        IReadOnlyList<RecurringEvent> recurringAppointments
+        IReadOnlyList<OneOffEvent> oneOffEvents,
+        IReadOnlyList<RecurringEvent> recurringEvents
     )
     {
-        ArgumentNullException.ThrowIfNull(oneOffappointments, nameof(oneOffappointments));
-        ArgumentNullException.ThrowIfNull(recurringAppointments, nameof(recurringAppointments));
+        ArgumentNullException.ThrowIfNull(oneOffEvents, nameof(oneOffEvents));
+        ArgumentNullException.ThrowIfNull(recurringEvents, nameof(recurringEvents));
 
-        Id = id;
-        UtcDateFrom = utcDateFrom;
-        UtcDateTo = utcDateTo;
-        this.oneOffappointments = BuildAppointmentIndex(oneOffappointments, AddAppointment);
-        this.recurringAppointments = BuildAppointmentIndex(recurringAppointments, AddAppointment);
+        this.Id = id;
+        this.UtcDateFrom = utcDateFrom;
+        this.UtcDateTo = utcDateTo;
+        
+        this.oneOffEvents = BuildEventIndex(oneOffEvents, AddEvent);
+        this.recurringEvents = BuildEventIndex(recurringEvents, AddEvent);
 
-        static HashSet<TAppointment> BuildAppointmentIndex<TAppointment>(
-            IReadOnlyList<TAppointment> appointments,
-            Func<HashSet<TAppointment>, TAppointment, bool, bool> add) where TAppointment : Event
+        this.domainEvents = new List<DomainEvent>();
+
+        static HashSet<TEvent> BuildEventIndex<TEvent>(
+            IReadOnlyList<TEvent> events,
+            Func<HashSet<TEvent>, TEvent, bool, bool> add) where TEvent : Event
         {
-            HashSet<TAppointment> index = new(appointments.Count, appointmentEqualityComparer);
+            HashSet<TEvent> index = new(events.Count, eventEqualityComparer);
 
-            foreach (TAppointment appointment in appointments)
+            foreach (TEvent appointment in events)
             {
                 const bool throwOnDuplicates = true;
 
@@ -49,39 +59,52 @@ public class Calendar
         }
     }
 
-    public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetAppointments()
-        => GetAppointments(UtcDateFrom, UtcDateTo);
+    public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents()
+        => GetEvents(UtcDateFrom, UtcDateTo);
 
-    public bool AddOneOffAppointment(OneOffEvent oneOffAppointment)
-        => AddAppointment(oneOffappointments, oneOffAppointment, throwOnDuplicates: false);
-
-    public bool AddRecurringAppointment(RecurringEvent recurringAppointment)
-        => AddAppointment(recurringAppointments, recurringAppointment, throwOnDuplicates: false);
-
-    private static bool AddAppointment<TAppointment>(
-        HashSet<TAppointment> appointments,
-        TAppointment appointment,
-        bool throwOnDuplicates) where TAppointment : Event
+    public bool AddOneOffEvent(OneOffEvent oneOffEvent)
     {
-        bool added = appointments.Add(appointment);
+        bool added = AddEvent(oneOffEvents, oneOffEvent, throwOnDuplicates: false);
 
-        if (added is not true && throwOnDuplicates)
+        if (added)
         {
-            throw AppointmentAlreadyExists(appointment.Id);
+            DomainEvent.OneOffEventAdded oneOffEventAdded = new(oneOffEvent);
+
+            this.PublishDomainEvent(oneOffEventAdded);
         }
 
         return added;
     }
 
-    private IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetAppointments(DateOnly from, DateOnly to)
+    public bool AddRecurringEvent(RecurringEvent recurringEvent)
+        => AddEvent(recurringEvents, recurringEvent, throwOnDuplicates: false);
+
+    public void AcknowledgeDomainEvents() => this.domainEvents.Clear();
+
+    private static bool AddEvent<TEvent>(
+        HashSet<TEvent> events,
+        TEvent @event,
+        bool throwOnDuplicates) where TEvent : Event
     {
-        foreach (OneOffEvent oneOff in oneOffappointments)
+        bool added = events.Add(@event);
+
+        if (added is not true && throwOnDuplicates)
+        {
+            throw EventAlreadyExists(@event.Id);
+        }
+
+        return added;
+    }
+
+    private IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly from, DateOnly to)
+    {
+        foreach (OneOffEvent oneOff in oneOffEvents)
         {
             yield return OneOf.Those(oneOff);
         }
 
         // TODO: add overrides, deletes
-        foreach (RecurringEvent recurring in recurringAppointments)
+        foreach (RecurringEvent recurring in recurringEvents)
         {
             IEnumerable<RecurringEvent.Occurrence> occurrences = recurring.ExpandOccurrences(from, to);
 
@@ -92,10 +115,12 @@ public class Calendar
         }
     }
 
-    private static ArgumentException AppointmentAlreadyExists(Guid id)
-        => new($"An appointment with Id={id} already exists.");
+    private void PublishDomainEvent(DomainEvent domainEvent) => this.domainEvents.Add(domainEvent);
 
-    private class AppointmentEqualityComparer : IEqualityComparer<Event>
+    private static ArgumentException EventAlreadyExists(Guid id)
+        => new($"Event with Id={id} already exists.");
+
+    private class EventEqualityComparer : IEqualityComparer<Event>
     {
         public bool Equals(Event? left, Event? right)
         {

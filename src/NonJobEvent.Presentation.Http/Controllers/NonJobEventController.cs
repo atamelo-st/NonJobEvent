@@ -35,7 +35,7 @@ namespace NonJobAppointment.WebApi.Controllers
 
             IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> appointments = 
                 calendar
-                    .GetAppointments()
+                    .GetEvents()
                     .ToList();
 
             IEnumerable<ViewModel.Event> appointmentViewModels =
