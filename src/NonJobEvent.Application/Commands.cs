@@ -14,4 +14,8 @@ public static class Commands
         long EventTechnicianId,
         int EventTimeseetCode
     );
+
+    public sealed record DeleteOneOffEvent(
+        Guid EventId
+    );
 }

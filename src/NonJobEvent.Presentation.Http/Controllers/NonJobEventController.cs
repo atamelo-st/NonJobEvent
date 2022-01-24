@@ -33,7 +33,7 @@ namespace NonJobAppointment.WebApi.Controllers
             // TODO: move this to a query handler
             Calendar calendar = await this.calendarRepo.GetCalendarAsync(query.calendarId, query.from, query.to);
 
-            IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> appointments = 
+            IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> appointments =
                 calendar
                     .GetEvents()
                     .ToList();
@@ -66,10 +66,20 @@ namespace NonJobAppointment.WebApi.Controllers
             Commands.AddOneOffEvent command,
             [FromServices] CommandHandler<Commands.AddOneOffEvent, bool> addOneOffEvent)
         {
-            bool result = await addOneOffEvent(command);
+            bool added = await addOneOffEvent(command);
 
             // TODO: do proper result handling, version propagation, etc
-            return Ok(result);
+            return Ok(added);
+        }
+
+        [HttpPost("delete-oneoff-event")]
+        public async Task<IActionResult> DeleteOneOffEvent(
+            Commands.DeleteOneOffEvent command,
+            [FromServices] CommandHandler<Commands.DeleteOneOffEvent, bool> deleteOneOffEvent)
+        {
+            bool deleted = await deleteOneOffEvent(command);
+
+            return Ok(deleted);
         }
     }
 }

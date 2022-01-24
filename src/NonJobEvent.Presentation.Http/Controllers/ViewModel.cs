@@ -4,6 +4,8 @@ public abstract record ViewModel
 {
     public abstract record Event
     {
+        // TODO: add version number for optimistic concurrency control
+
         public record OneOff(
             Guid Id,
             string Title,

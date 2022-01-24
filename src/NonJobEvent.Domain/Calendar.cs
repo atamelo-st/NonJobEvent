@@ -11,16 +11,13 @@ public class Calendar
 
     private readonly HashSet<OneOffEvent> oneOffEvents;
     private readonly HashSet<RecurringEvent> recurringEvents;
-
     private readonly List<DomainEvent> domainEvents;
-
-    public IReadOnlyList<DomainEvent> DomainEvents => this.domainEvents;
 
     public Guid Id { get; }
     public DateOnly UtcDateFrom { get; }
     public DateOnly UtcDateTo { get; }
 
-
+    public IReadOnlyList<DomainEvent> DomainEvents => this.domainEvents;
 
     public Calendar(
         Guid id,

@@ -6,7 +6,8 @@ namespace NonJobEvent.Application.Handlers;
 
 public class CalendarCommandQueryHandler :
     IQueryHandler<Queries.GetCalendarEvents, object>,
-    ICommandHandler<Commands.AddOneOffEvent, bool>
+    ICommandHandler<Commands.AddOneOffEvent, bool>,
+    ICommandHandler<Commands.DeleteOneOffEvent, bool>
 {
     private readonly ICalendarRepository repo;
 
@@ -39,8 +40,26 @@ public class CalendarCommandQueryHandler :
         if (added)
         {
             await this.repo.SaveUpdatesAsync(calendar);
+
+            // TODO: dispatch domain events
         }
 
         return added;
+    }
+
+    public async Task<bool> HandleAsync(Commands.DeleteOneOffEvent command)
+    {
+        bool deleted = await this.repo.DeleteOneOffEventAsync(command.EventId);
+
+        if (deleted)
+        {
+            // NOTE: we don't seem to have have any business logic to execute upon deleting
+            // a one-off event. So we don't go through the domain model and 'publish'
+            // the domain event directly from the handler
+
+            // TODO: dispatch domain events
+        }
+
+        return deleted;
     }
 }
