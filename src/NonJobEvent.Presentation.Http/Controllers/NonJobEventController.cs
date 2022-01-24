@@ -28,10 +28,10 @@ namespace NonJobAppointment.WebApi.Controllers
         }
 
         [HttpGet("get-calendar-events")]
-        public IActionResult Get(Queries.GetCalendarEvents query)
+        public async Task<IActionResult> Get(Queries.GetCalendarEvents query)
         {
             // TODO: move this to a query handler
-            Calendar calendar = this.calendarRepo.GetCalendar(query.calendarId, query.from, query.to);
+            Calendar calendar = await this.calendarRepo.GetCalendarAsync(query.calendarId, query.from, query.to);
 
             IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> appointments = 
                 calendar

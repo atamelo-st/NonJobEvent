@@ -10,4 +10,8 @@
     <ProjectReference Include="..\NonJobEvent.Common\NonJobEvent.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DomainEvents\" />
+  </ItemGroup>
+
 </Project>
