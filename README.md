@@ -1,2 +1,2 @@
-# NonJobAppointment
-Domain modelling for non job appointments
+# NonJobEvent
+Domain modelling for non job events
