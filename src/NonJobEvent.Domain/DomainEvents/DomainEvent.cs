@@ -17,4 +17,6 @@ public abstract partial record DomainEvent
 
     // TODO: consider flattening event payload instead of directly using domain classes
     public sealed record OneOffEventAdded(OneOffEvent AddedEvent, Calendar calendar) : DomainEvent;
+
+    public sealed record OneOffEventDeleted(Guid DeletedEventId, Guid CalendarId) : DomainEvent;
 }

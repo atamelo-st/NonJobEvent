@@ -1,5 +1,6 @@
 ﻿using System;
 using NonJobEvent.Domain;
+using NonJobEvent.Domain.DomainEvents;
 using NonJobEvent.Presenation.Api.DataAccess;
 
 namespace NonJobEvent.Application.Handlers;
@@ -38,7 +39,7 @@ public class CalendarCommandQueryHandler :
 
         if (added)
         {
-            await this.repo.SaveUpdatesAsync(calendar);
+            await this.repo.SaveUpdatesAsync(calendar.DomainEvents);
 
             // TODO: dispatch domain events
         }
@@ -48,14 +49,19 @@ public class CalendarCommandQueryHandler :
 
     public async Task<bool> HandleAsync(Commands.DeleteOneOffEvent command)
     {
-        bool deleted = await this.repo.DeleteOneOffEventAsync(command.EventId);
+        // NOTE: we don't seem to have have any business logic to execute upon deleting
+        // a one-off event. So we don't go through the domain model and 'publish'
+        // the domain event directly from the handler
+        // NOTE: dunno if this 'shortcut' is a worthwhile optiization, though..
+        bool deleted = await this.repo.SaveUpdatesAsync(
+            new List<DomainEvent> 
+            { 
+                new DomainEvent.OneOffEventDeleted(command.CalendarId, command.EventId)
+            }
+        );
 
         if (deleted)
         {
-            // NOTE: we don't seem to have have any business logic to execute upon deleting
-            // a one-off event. So we don't go through the domain model and 'publish'
-            // the domain event directly from the handler
-
             // TODO: dispatch domain events
         }
 

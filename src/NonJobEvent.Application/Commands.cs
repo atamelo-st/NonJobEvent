@@ -15,7 +15,8 @@ public static partial class Commands
     );
 
     public sealed record DeleteOneOffEvent(
-        Guid EventId
+        Guid EventId,
+        Guid CalendarId
     );
 
     public sealed record ChangeOneOffEvent(
