@@ -4,7 +4,21 @@ namespace NonJobEvent.Domain;
 
 public readonly record struct RecurrencePattern
 {
-    public string Pattern { get; }
+    public string Value { get; }
+
+    public static RecurrencePattern From(string pattern)
+    {
+        if (!TryFrom(pattern, out RecurrencePattern? recurrencePattern, out string? errorMessage))
+        {
+           throw new ArgumentException(errorMessage);
+        }
+
+        return recurrencePattern.Value;
+    }
+
+    public static bool TryFrom(
+        string pattern,
+        [NotNullWhen(true)] out RecurrencePattern? recurrencePattern) => TryFrom(pattern, out recurrencePattern, out _);
 
     public static bool TryFrom(
         string pattern,
@@ -25,7 +39,7 @@ public readonly record struct RecurrencePattern
         return true;
     }
 
-    private RecurrencePattern(string pattern) => this.Pattern = pattern;
+    private RecurrencePattern(string pattern) => this.Value = pattern;
 
     public RecurrencePattern() => throw new InvalidOperationException("Use constructor wth parameters.");
 }

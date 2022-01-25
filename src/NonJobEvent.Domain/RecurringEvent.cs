@@ -1,10 +1,11 @@
-﻿namespace NonJobEvent.Domain;
+﻿using EWSoftware.PDI;
+
+namespace NonJobEvent.Domain;
 
 public sealed record RecurringEvent : Event
 {
     public DateOnly StartDate { get; }
     public RecurrencePattern Pattern { get; }
-    public EndCondition WhenToEnd { get; }
 
     public RecurringEvent(
         Guid id,
@@ -13,22 +14,28 @@ public sealed record RecurringEvent : Event
         DateOnly startDate,
         TimeFrame timeFrame,
         int timeseetCode,
-        RecurrencePattern pattern,
-        EndCondition endCondition) : base(id, title, summary, timeFrame, timeseetCode)
+        RecurrencePattern pattern) : base(id, title, summary, timeFrame, timeseetCode)
     {
         ArgumentNullException.ThrowIfNull(pattern, nameof(pattern));
-        ArgumentNullException.ThrowIfNull(endCondition, nameof(endCondition));
 
         this.StartDate = startDate;
         this.Pattern = pattern;
-        this.WhenToEnd = endCondition;
     }
 
     public IEnumerable<Occurrence> ExpandOccurrences(DateOnly from, DateOnly to)
     {
-        IEnumerable<Occurrence> occurrences = OccurenceGenerator.GenerateForPeriod(from, to, StartDate, Pattern);
+        // TODO: check that 'to - from <= some_time'
 
-        return occurrences;
+        IEnumerable<DateTime> dateTimes = OccurenceGenerator.GenerateDatesForPeriod(from, to, StartDate, Pattern);
+
+        foreach (DateTime dateTime in dateTimes)
+        {
+            DateOnly date = DateOnly.FromDateTime(dateTime);
+
+            Occurrence.Key key = new(parent: this, date: date);
+
+            yield return new Occurrence(key, this.Title, this.Summary, this.TimeFrame);
+        }
     }
 
     public sealed record Occurrence
@@ -66,21 +73,24 @@ public sealed record RecurringEvent : Event
             }
         }
     }
-
-    public sealed record EndCondition
-    {
-
-    }
 }
 
 public class OccurenceGenerator
 {
-    public static IEnumerable<RecurringEvent.Occurrence> GenerateForPeriod(
+    public static IEnumerable<DateTime> GenerateDatesForPeriod(
         DateOnly from,
         DateOnly to,
         DateOnly startDate,
         RecurrencePattern pattern)
     {
-        throw new NotImplementedException();
+        DateTime startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
+        DateTime fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+        DateTime toDateTime = to.ToDateTime(TimeOnly.MinValue);
+
+        Recurrence recurrence = new(pattern.Value) { StartDateTime = startDateTime };
+
+        DateTimeCollection dates =  recurrence.InstancesBetween(fromDateTime, toDateTime);
+
+        return dates;
     }
 }

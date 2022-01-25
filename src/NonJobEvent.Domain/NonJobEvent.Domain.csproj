@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="EWSoftware.PDI" Version="2021.11.23" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\NonJobEvent.Common\NonJobEvent.Common.csproj" />
   </ItemGroup>
 
