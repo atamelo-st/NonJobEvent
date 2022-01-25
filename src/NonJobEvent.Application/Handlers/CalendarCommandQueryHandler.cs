@@ -8,7 +8,8 @@ namespace NonJobEvent.Application.Handlers;
 public class CalendarCommandQueryHandler :
     IQueryHandler<Queries.GetCalendarEvents, object>,
     ICommandHandler<Commands.AddOneOffEvent, bool>,
-    ICommandHandler<Commands.DeleteOneOffEvent, bool>
+    ICommandHandler<Commands.DeleteOneOffEvent, bool>,
+    ICommandHandler<Commands.ChangeOneOffEvent, bool>
 {
     private readonly ICalendarRepository repo;
 
@@ -52,7 +53,7 @@ public class CalendarCommandQueryHandler :
         // NOTE: we don't seem to have have any business logic to execute upon deleting
         // a one-off event. So we don't go through the domain model and 'publish'
         // the domain event directly from the handler
-        // NOTE: dunno if this 'shortcut' is a worthwhile optiization, though..
+        // NOTE: dunno if this 'shortcut' is a worthwhile optimization, though..
         bool deleted = await this.repo.SaveUpdatesAsync(
             new List<DomainEvent> 
             { 
@@ -66,5 +67,10 @@ public class CalendarCommandQueryHandler :
         }
 
         return deleted;
+    }
+
+    public Task<bool> HandleAsync(Commands.ChangeOneOffEvent command)
+    {
+        throw new NotImplementedException();
     }
 }

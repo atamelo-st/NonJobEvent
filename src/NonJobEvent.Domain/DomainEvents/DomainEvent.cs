@@ -19,4 +19,16 @@ public abstract partial record DomainEvent
     public sealed record OneOffEventAdded(OneOffEvent AddedEvent, Calendar calendar) : DomainEvent;
 
     public sealed record OneOffEventDeleted(Guid DeletedEventId, Guid CalendarId) : DomainEvent;
+
+    // NOTE: 'null' communicates 'not changed'. In case 'null' is a ligit value, 
+    // we'll need to communicate 'not changed' with an extra field (flags?)
+    public sealed record OneOffEventChanged(
+        Guid ChangedEventId, 
+        Guid CalendarId,
+        string? NewEventTitle,
+        string? NewEventSummary,
+        DateOnly? NewEventDate,
+        TimeFrame? NewEventTimeFrame,
+        int? NewEventTimeseetCode
+    ) : DomainEvent;
 }
