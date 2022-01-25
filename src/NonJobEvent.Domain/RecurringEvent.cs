@@ -4,7 +4,7 @@ public sealed record RecurringEvent : Event
 {
     public DateOnly StartDate { get; }
     public RecurrencePattern Pattern { get; }
-    public EndCondition EndCondition1 { get; }
+    public EndCondition WhenToEnd { get; }
 
     public RecurringEvent(
         Guid id,
@@ -21,7 +21,7 @@ public sealed record RecurringEvent : Event
 
         this.StartDate = startDate;
         this.Pattern = pattern;
-        this.EndCondition1 = endCondition;
+        this.WhenToEnd = endCondition;
     }
 
     public IEnumerable<Occurrence> ExpandOccurrences(DateOnly from, DateOnly to)
