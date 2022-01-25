@@ -64,7 +64,7 @@ namespace NonJobAppointment.WebApi.Controllers
         }
 
 
-        [HttpPost("add-oneoff-event")]
+        [HttpPut("add-oneoff-event")]
         public async Task<IActionResult> AddOneOffEvent(
             Commands.AddOneOffEvent command,
             [FromServices] CommandHandler<Commands.AddOneOffEvent, bool> addOneOffEvent)
@@ -75,7 +75,7 @@ namespace NonJobAppointment.WebApi.Controllers
             return Ok(added);
         }
 
-        [HttpPost("delete-oneoff-event")]
+        [HttpPut("delete-oneoff-event")]
         public async Task<IActionResult> DeleteOneOffEvent(
             Commands.DeleteOneOffEvent command,
             [FromServices] CommandHandler<Commands.DeleteOneOffEvent, bool> deleteOneOffEvent)
@@ -83,6 +83,16 @@ namespace NonJobAppointment.WebApi.Controllers
             bool deleted = await deleteOneOffEvent(command);
 
             return Ok(deleted);
+        }
+
+        [HttpPut("change-oneoff-event")]
+        public async Task<IActionResult> ChangeOneOffEvent(
+            Commands.ChangeOneOffEvent command,
+            [FromServices] CommandHandler<Commands.ChangeOneOffEvent, bool> changeOneOffEvent)
+        {
+            bool changed = await changeOneOffEvent(command);
+
+            return Ok(changed);
         }
     }
 }

@@ -23,7 +23,7 @@ public class CalendarCommandQueryHandler :
 
     public async Task<bool> HandleAsync(Commands.AddOneOffEvent command)
     {
-        Calendar calendar = await this.repo.GetCalendarAsync(command.CalenderId, command.EventDate, command.EventDate);
+        Calendar calendar = await this.repo.GetCalendarAsync(command.CalendarId, command.EventDate, command.EventDate);
 
         OneOffEvent oneOffEvent = new(
             command.EventId,

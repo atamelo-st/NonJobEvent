@@ -93,6 +93,9 @@ public class Calendar
         return added;
     }
 
+    // TODO: we need to be careful with 'from' and 'to' as we may add new events
+    // to the calendar (after it has been read from the repository) with dates outside
+    // that [from, to] range
     private IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly from, DateOnly to)
     {
         foreach (OneOffEvent oneOff in oneOffEvents)

@@ -5,7 +5,7 @@ namespace NonJobEvent.Application;
 public static partial class Commands
 {
     public sealed record AddOneOffEvent(
-        Guid CalenderId,
+        Guid CalendarId,
         Guid EventId,
         string EventTitle,
         string EventSummary,
@@ -16,5 +16,16 @@ public static partial class Commands
 
     public sealed record DeleteOneOffEvent(
         Guid EventId
+    );
+
+    public sealed record ChangeOneOffEvent(
+        Guid CalendarId,
+        Guid EventId,
+        string? NewEventTitle,
+        string? NewEventSummary,
+        DateOnly? NewEventDate,
+        TimeFrame? NewEventTimeFrame,
+        int? NewEventTimeseetCode,
+        uint ExpectedVersion
     );
 }
