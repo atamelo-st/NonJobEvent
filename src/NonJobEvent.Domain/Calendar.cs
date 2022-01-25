@@ -12,15 +12,11 @@ public class Calendar
     private readonly List<DomainEvent> domainEvents;
 
     public Guid Id { get; }
-    public DateOnly UtcDateFrom { get; }
-    public DateOnly UtcDateTo { get; }
 
     public IReadOnlyList<DomainEvent> DomainEvents => this.domainEvents;
 
     public Calendar(
         Guid id,
-        DateOnly utcDateFrom,
-        DateOnly utcDateTo,
         IReadOnlyList<OneOffEvent> oneOffEvents,
         IReadOnlyList<RecurringEvent> recurringEvents)
     {
@@ -28,8 +24,6 @@ public class Calendar
         ArgumentNullException.ThrowIfNull(recurringEvents, nameof(recurringEvents));
 
         this.Id = id;
-        this.UtcDateFrom = utcDateFrom;
-        this.UtcDateTo = utcDateTo;
         
         this.oneOffEvents = BuildEventIndex(oneOffEvents, AddEvent);
         this.recurringEvents = BuildEventIndex(recurringEvents, AddEvent);
@@ -53,8 +47,24 @@ public class Calendar
         }
     }
 
-    public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents()
-        => GetEvents(UtcDateFrom, UtcDateTo);
+    public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly from, DateOnly to)
+    {
+        foreach (OneOffEvent oneOff in this.oneOffEvents.Values)
+        {
+            yield return OneOf.Those(oneOff);
+        }
+
+        // TODO: add overrides, deletes
+        foreach (RecurringEvent recurring in this.recurringEvents.Values)
+        {
+            IEnumerable<RecurringEvent.Occurrence> occurrences = recurring.ExpandOccurrences(from, to);
+
+            foreach (RecurringEvent.Occurrence occurrence in occurrences)
+            {
+                yield return OneOf.Those(occurrence);
+            }
+        }
+    }
 
     public bool AddOneOffEvent(OneOffEvent oneOffEvent)
     {
@@ -143,28 +153,6 @@ public class Calendar
         }
 
         return added;
-    }
-
-    // TODO: we need to be careful with 'from' and 'to' as we may add new events
-    // to the calendar (after it has been read from the repository) with dates outside
-    // that [from, to] range
-    private IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly from, DateOnly to)
-    {
-        foreach (OneOffEvent oneOff in this.oneOffEvents.Values)
-        {
-            yield return OneOf.Those(oneOff);
-        }
-
-        // TODO: add overrides, deletes
-        foreach (RecurringEvent recurring in this.recurringEvents.Values)
-        {
-            IEnumerable<RecurringEvent.Occurrence> occurrences = recurring.ExpandOccurrences(from, to);
-
-            foreach (RecurringEvent.Occurrence occurrence in occurrences)
-            {
-                yield return OneOf.Those(occurrence);
-            }
-        }
     }
 
     private void PublishDomainEvent(DomainEvent domainEvent)
