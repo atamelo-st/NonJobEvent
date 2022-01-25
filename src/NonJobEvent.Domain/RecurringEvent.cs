@@ -4,6 +4,7 @@ public sealed record RecurringEvent : Event
 {
     public DateOnly StartDate { get; }
     public RecurrencePattern Pattern { get; }
+    public EndCondition EndCondition1 { get; }
 
     public RecurringEvent(
         Guid id,
@@ -12,12 +13,15 @@ public sealed record RecurringEvent : Event
         DateOnly startDate,
         TimeFrame timeFrame,
         int timeseetCode,
-        RecurrencePattern pattern) : base(id, title, summary, timeFrame, timeseetCode)
+        RecurrencePattern pattern,
+        EndCondition endCondition) : base(id, title, summary, timeFrame, timeseetCode)
     {
         ArgumentNullException.ThrowIfNull(pattern, nameof(pattern));
+        ArgumentNullException.ThrowIfNull(endCondition, nameof(endCondition));
 
         this.StartDate = startDate;
         this.Pattern = pattern;
+        this.EndCondition1 = endCondition;
     }
 
     public IEnumerable<Occurrence> ExpandOccurrences(DateOnly from, DateOnly to)
@@ -27,7 +31,7 @@ public sealed record RecurringEvent : Event
         return occurrences;
     }
 
-    public record Occurrence
+    public sealed record Occurrence
     {
         public Key Id { get; }
         public string Title { get; }
@@ -61,6 +65,11 @@ public sealed record RecurringEvent : Event
                 this.Date = date;
             }
         }
+    }
+
+    public sealed record EndCondition
+    {
+
     }
 }
 

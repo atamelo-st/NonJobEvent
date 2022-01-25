@@ -31,4 +31,7 @@ public abstract partial record DomainEvent
         TimeFrame? NewEventTimeFrame,
         int? NewEventTimeseetCode
     ) : DomainEvent;
+
+    // TODO: consider flattening event payload instead of directly using domain classes
+    public sealed record RecurringEventAdded(RecurringEvent AddedEvent, Calendar calendar) : DomainEvent;
 }

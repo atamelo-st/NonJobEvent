@@ -68,7 +68,7 @@ public class Calendar
 
     public bool AddOneOffEvent(OneOffEvent oneOffEvent)
     {
-        bool added = AddEvent(oneOffEvents, oneOffEvent, throwOnDuplicates: false);
+        bool added = AddEvent(this.oneOffEvents, oneOffEvent, throwOnDuplicates: false);
 
         if (added)
         {
@@ -135,7 +135,18 @@ public class Calendar
     }
 
     public bool AddRecurringEvent(RecurringEvent recurringEvent)
-        => AddEvent(recurringEvents, recurringEvent, throwOnDuplicates: false);
+    {
+        bool added  = AddEvent(this.recurringEvents, recurringEvent, throwOnDuplicates: false);
+
+        if (added)
+        {
+            DomainEvent.RecurringEventAdded recuringEventAdded = new(recurringEvent, calendar: this);
+
+            this.PublishDomainEvent(recuringEventAdded);
+        }
+
+        return added;
+    }
 
     public void AcknowledgeDomainEvents()
         => this.domainEvents.Clear();

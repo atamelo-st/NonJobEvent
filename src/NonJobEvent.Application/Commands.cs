@@ -29,4 +29,14 @@ public static partial class Commands
         int? NewEventTimeseetCode,
         uint ExpectedVersion
     );
+
+    public sealed record AddRecurringEvent(
+        Guid Id,
+        string Title,
+        string Summary,
+        DateOnly StartDate,
+        TimeFrame timeFrame,
+        int timeseetCode,
+        RecurrencePattern pattern
+    );
 }
