@@ -36,4 +36,6 @@ public abstract partial record DomainEvent
     public sealed record RecurringEventAdded(RecurringEvent AddedEvent, Calendar calendar) : DomainEvent;
 
     public sealed record RecurringEventOccurrenceDeleted(RecurringEvent ParentRecurringEvent, DateOnly Date) : DomainEvent;
+
+    public sealed record RecurringEventOccurrenceUnDeleted(RecurringEvent ParentRecurringEvent, DateOnly Date) : DomainEvent;
 }

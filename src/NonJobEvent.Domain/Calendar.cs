@@ -59,15 +59,22 @@ public class Calendar
         }
 
         // TODO: add overrides, deletes
-        foreach (RecurringEvent recurring in this.recurringEvents.Values)
+        foreach (RecurringEvent recurringEvent in this.recurringEvents.Values)
         {
-            IEnumerable<RecurringEvent.Occurrence> occurrences = recurring.ExpandOccurrences(from, to);
+            IEnumerable<RecurringEvent.Occurrence> occurrences =
+                recurringEvent
+                    .ExpandOccurrences(from, to)
+                    //Skip deleted
+                    .Where(occurrence => !IsOccurrenceDeleted(occurrence));
 
             foreach (RecurringEvent.Occurrence occurrence in occurrences)
             {
                 yield return OneOf.Those(occurrence);
             }
         }
+
+        bool IsOccurrenceDeleted(RecurringEvent.Occurrence occurrence) 
+            => this.IsOccurrenceDeleted(occurrence.Parent.Id, occurrence.Date);
     }
 
     public bool AddOneOffEvent(OneOffEvent oneOffEvent)
@@ -152,14 +159,34 @@ public class Calendar
         return added;
     }
 
-    public bool DeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
+    public bool DeleteRecurringEvent(Guid recurringEventId)
     {
-        if (!this.RecurringEventExists(parentRecurringEventId))
+        bool removed = this.recurringEvents.Remove(recurringEventId);
+
+        if (removed is false)
         {
             return false;
         }
 
-        if (!this.recurringOccurrencesTombstones.TryGetValue(parentRecurringEventId, out var tombstones))
+        this.recurringOccurrencesTombstones.Remove(recurringEventId);
+
+        // TODO: delete overrides
+
+        // TODO: publish the event
+
+        return true;
+    }
+
+    // TODO: return smth more meaningful than just bool
+    // to distinguesh between 'parent doens't exist' and 'occurrecnce already deleted'
+    public bool DeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
+    {
+        if (!this.RecurringEventOccurrenceExists(parentRecurringEventId, date))
+        {
+            return false;
+        }
+
+        if (!this.TryGetTombstones(parentRecurringEventId, out HashSet<DateOnly>? tombstones))
         {
             tombstones = new HashSet<DateOnly>();
 
@@ -182,8 +209,54 @@ public class Calendar
         return deleted;
     }
 
+    public bool UnDeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
+    {
+        if (!this.RecurringEventOccurrenceExists(parentRecurringEventId, date))
+        {
+            return false;
+        }
+
+        if (!this.TryGetTombstones(parentRecurringEventId, out var tombstones))
+        {
+            return false;
+        }
+
+        bool undeleted = tombstones.Remove(date);
+
+        if (undeleted)
+        {
+            RecurringEvent parentRecurringEvent = this.recurringEvents[parentRecurringEventId];
+
+            DomainEvent.RecurringEventOccurrenceUnDeleted recurringEventOccurrenceUnDeleted = new(
+                parentRecurringEvent,
+                date);
+
+            this.PublishDomainEvent(recurringEventOccurrenceUnDeleted);
+        }
+
+        return undeleted;
+    }
+
+    public bool RecurringEventOccurrenceExists(Guid parentRecurringEventId, DateOnly date)
+    {
+        if (!this.TryGetRecurringEvent(parentRecurringEventId, out RecurringEvent? recurringEvent))
+        {
+            return false;
+        }
+
+        bool exists = recurringEvent.OccursOn(date);
+
+        return exists;
+    }
+
     public void AcknowledgeDomainEvents()
         => this.domainEvents.Clear();
+
+    private bool TryGetRecurringEvent(Guid recurringEventId, [NotNullWhen(true)] out RecurringEvent? recurringEvent)
+        => this.recurringEvents.TryGetValue(recurringEventId, out recurringEvent);
+
+    private bool TryGetTombstones(Guid recurringEventId, [NotNullWhen(true)] out HashSet<DateOnly>? tombtones)
+        => this.recurringOccurrencesTombstones.TryGetValue(recurringEventId, out tombtones);
 
     private static bool AddEvent<TEvent>(
         Dictionary<Guid, TEvent> events,
@@ -200,11 +273,16 @@ public class Calendar
         return added;
     }
 
-    private bool RecurringEventExists(Guid recurringEventId)
+    private bool IsOccurrenceDeleted(Guid parentRecurringEventId, DateOnly date)
     {
-        bool exists = this.recurringEvents.ContainsKey(recurringEventId);
+        if (this.TryGetTombstones(parentRecurringEventId, out HashSet<DateOnly>? tombstones))
+        {
+            bool deleted = tombstones.Contains(date);
 
-        return exists;
+            return deleted;
+        }
+
+        return false;
     }
 
     private void PublishDomainEvent(DomainEvent domainEvent)

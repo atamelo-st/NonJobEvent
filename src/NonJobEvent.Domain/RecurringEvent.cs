@@ -26,7 +26,7 @@ public sealed record RecurringEvent : Event
     {
         // TODO: check that 'to - from <= some_time'
 
-        IEnumerable<DateTime> dateTimes = OccurenceGenerator.GenerateDatesForPeriod(from, to, StartDate, Pattern);
+        IEnumerable<DateTime> dateTimes = OccurenceGenerator.GenerateDatesForPeriod(from, to, this.StartDate, this.Pattern);
 
         foreach (DateTime dateTime in dateTimes)
         {
@@ -34,6 +34,20 @@ public sealed record RecurringEvent : Event
 
             yield return new Occurrence(parent: this, date, this.Title, this.Summary, this.TimeFrame);
         }
+    }
+
+    public bool OccursOn(DateOnly specificDay)
+    {
+        // TODO: not sure if +-1 day is needed, ideally we should be abel to pass just [specificDay; specificDay] range
+        DateOnly dayBefore = specificDay.AddDays(-1);
+        DateOnly dayAfter = specificDay.AddDays(+1);
+
+        IEnumerable<DateTime> dates =
+            OccurenceGenerator.GenerateDatesForPeriod(from: dayBefore, to: dayAfter, this.StartDate, this.Pattern);
+
+        bool occurs = dates.Any(date => DateOnly.FromDateTime(date) == specificDay);
+
+        return occurs;
     }
 
     public sealed record Occurrence
