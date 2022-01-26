@@ -32,46 +32,44 @@ public sealed record RecurringEvent : Event
         {
             DateOnly date = DateOnly.FromDateTime(dateTime);
 
-            Occurrence.Key key = new(parent: this, date: date);
-
-            yield return new Occurrence(key, this.Title, this.Summary, this.TimeFrame);
+            yield return new Occurrence(parent: this, date, this.Title, this.Summary, this.TimeFrame);
         }
     }
 
     public sealed record Occurrence
     {
-        public Key Id { get; }
+        public RecurringEvent Parent { get; }
+        public DateOnly Date { get; }
         public string Title { get; }
         public string Summary { get; }
         public TimeFrame TimeFrame { get; }
-        public RecurringEvent Parent => Id.Parent;
-        public DateOnly Date => Id.Date;
 
-        internal Occurrence(Key id, string title, string summary, TimeFrame timeFrame)
+        internal Occurrence(RecurringEvent parent, DateOnly date, string title, string summary, TimeFrame timeFrame)
         {
-            ArgumentNullException.ThrowIfNull(id, nameof(id));
+            ArgumentNullException.ThrowIfNull(parent, nameof(parent));
             ArgumentNullException.ThrowIfNull(title, nameof(title));
             ArgumentNullException.ThrowIfNull(summary, nameof(summary));
+            ArgumentNullException.ThrowIfNull(timeFrame, nameof(timeFrame));
 
-            this.Id = id;
+            this.Parent = parent;
             this.Title = title;
             this.Summary = summary;
             this.TimeFrame = timeFrame;
         }
 
-        public readonly record struct Key
-        {
-            public RecurringEvent Parent { get; }
-            public DateOnly Date { get; }
+        //public readonly record struct Key
+        //{
+        //    public RecurringEvent Parent { get; }
+        //    public DateOnly Date { get; }
 
-            internal Key(RecurringEvent parent, DateOnly date)
-            {
-                ArgumentNullException.ThrowIfNull(parent, nameof(parent));
+        //    internal Key(RecurringEvent parent, DateOnly date)
+        //    {
+        //        ArgumentNullException.ThrowIfNull(parent, nameof(parent));
 
-                this.Parent = parent;
-                this.Date = date;
-            }
-        }
+        //        this.Parent = parent;
+        //        this.Date = date;
+        //    }
+        //}
     }
 }
 

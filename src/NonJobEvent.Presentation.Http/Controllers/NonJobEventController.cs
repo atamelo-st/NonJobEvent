@@ -59,7 +59,7 @@ namespace NonJobAppointment.WebApi.Controllers
                     from.TimeFrame.IsAllDay, from.TimeFrame.StartTime, from.TimeFrame.EndTime);
 
             static ViewModel.Event OccurrenceViewModel(RecurringEvent.Occurrence from)
-                => new ViewModel.Event.RecurringOccurrence(from.Parent.Id, from.Parent.Title, from.Summary, from.Date,
+                => new ViewModel.Event.RecurringOccurrence(from.Parent.Id, from.Title, from.Summary, from.Date,
                     from.Parent.TimeseetCode, from.TimeFrame.IsAllDay, from.TimeFrame.StartTime, from.TimeFrame.EndTime);
         }
 
