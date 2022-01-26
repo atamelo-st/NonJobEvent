@@ -16,39 +16,22 @@ public class Calendar
 
     public IReadOnlyList<DomainEvent> DomainEvents => this.domainEvents;
 
-    public Calendar(
-        Guid id,
-        IReadOnlyList<OneOffEvent>? oneOffEvents = null,
-        IReadOnlyList<RecurringEvent>? recurringEvents = null)
+    public static Calendar Create(Guid id)
     {
-        this.Id = id;
-        
-        this.oneOffEvents = BuildEventIndex(oneOffEvents, AddEvent);
-        this.recurringEvents = BuildEventIndex(recurringEvents, AddEvent);
+        // TODO: publish 'CalendarCreated' event
 
-        this.domainEvents = new List<DomainEvent>();
-        this.recurringOccurrencesTombstones = new Dictionary<Guid, HashSet<DateOnly>>();
+        return new(id);
+    }
 
-        static Dictionary<Guid, TEvent> BuildEventIndex<TEvent>(
-            IReadOnlyList<TEvent>? events,
-            Func<Dictionary<Guid, TEvent>, TEvent, bool, bool> add) where TEvent : Event
-        {
-            if (events is null)
-            {
-                return new();
-            }
+    public static Calendar Load(
+            Guid id,
+            IReadOnlyList<OneOffEvent> oneOffEvents,
+            IReadOnlyList<RecurringEvent> recurringEvents)
+    {
+        ArgumentNullException.ThrowIfNull(oneOffEvents, nameof(oneOffEvents));
+        ArgumentNullException.ThrowIfNull(recurringEvents, nameof(recurringEvents));
 
-            Dictionary<Guid, TEvent> index = new(events.Count);
-
-            foreach (TEvent appointment in events)
-            {
-                const bool throwOnDuplicates = true;
-
-                add(index, appointment, throwOnDuplicates);
-            }
-
-            return index;
-        }
+        return new(id, oneOffEvents, recurringEvents);
     }
 
     public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly from, DateOnly to)
@@ -251,6 +234,41 @@ public class Calendar
 
     public void AcknowledgeDomainEvents()
         => this.domainEvents.Clear();
+
+    private Calendar(
+        Guid id,
+        IReadOnlyList<OneOffEvent>? oneOffEvents = null,
+        IReadOnlyList<RecurringEvent>? recurringEvents = null)
+    {
+        this.Id = id;
+
+        this.oneOffEvents = BuildEventIndex(oneOffEvents, AddEvent);
+        this.recurringEvents = BuildEventIndex(recurringEvents, AddEvent);
+
+        this.domainEvents = new List<DomainEvent>();
+        this.recurringOccurrencesTombstones = new Dictionary<Guid, HashSet<DateOnly>>();
+
+        static Dictionary<Guid, TEvent> BuildEventIndex<TEvent>(
+            IReadOnlyList<TEvent>? events,
+            Func<Dictionary<Guid, TEvent>, TEvent, bool, bool> add) where TEvent : Event
+        {
+            if (events is null)
+            {
+                return new();
+            }
+
+            Dictionary<Guid, TEvent> index = new(events.Count);
+
+            foreach (TEvent appointment in events)
+            {
+                const bool throwOnDuplicates = true;
+
+                add(index, appointment, throwOnDuplicates);
+            }
+
+            return index;
+        }
+    }
 
     private bool TryGetRecurringEvent(Guid recurringEventId, [NotNullWhen(true)] out RecurringEvent? recurringEvent)
         => this.recurringEvents.TryGetValue(recurringEventId, out recurringEvent);
