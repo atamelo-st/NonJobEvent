@@ -9,6 +9,7 @@ public class Calendar
 {
     private readonly Dictionary<Guid, OneOffEvent> oneOffEvents;
     private readonly Dictionary<Guid, RecurringEvent> recurringEvents;
+    private readonly Dictionary<Guid, HashSet<DateOnly>> recurringOccurrencesTombstones;
     private readonly List<DomainEvent> domainEvents;
 
     public Guid Id { get; }
@@ -26,6 +27,7 @@ public class Calendar
         this.recurringEvents = BuildEventIndex(recurringEvents, AddEvent);
 
         this.domainEvents = new List<DomainEvent>();
+        this.recurringOccurrencesTombstones = new Dictionary<Guid, HashSet<DateOnly>>();
 
         static Dictionary<Guid, TEvent> BuildEventIndex<TEvent>(
             IReadOnlyList<TEvent>? events,
@@ -150,6 +152,36 @@ public class Calendar
         return added;
     }
 
+    public bool DeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
+    {
+        if (!this.RecurringEventExists(parentRecurringEventId))
+        {
+            return false;
+        }
+
+        if (!this.recurringOccurrencesTombstones.TryGetValue(parentRecurringEventId, out var tombstones))
+        {
+            tombstones = new HashSet<DateOnly>();
+
+            this.recurringOccurrencesTombstones.Add(parentRecurringEventId, tombstones);
+        }
+
+        bool deleted = tombstones.Add(date);
+
+        if (deleted)
+        {
+            RecurringEvent parentRecurringEvent = this.recurringEvents[parentRecurringEventId];
+
+            DomainEvent.RecurringEventOccurrenceDeleted recurringEventOccurrenceDeleted = new (
+                parentRecurringEvent, 
+                date);
+
+            this.PublishDomainEvent(recurringEventOccurrenceDeleted);
+        }
+
+        return deleted;
+    }
+
     public void AcknowledgeDomainEvents()
         => this.domainEvents.Clear();
 
@@ -166,6 +198,13 @@ public class Calendar
         }
 
         return added;
+    }
+
+    private bool RecurringEventExists(Guid recurringEventId)
+    {
+        bool exists = this.recurringEvents.ContainsKey(recurringEventId);
+
+        return exists;
     }
 
     private void PublishDomainEvent(DomainEvent domainEvent)
