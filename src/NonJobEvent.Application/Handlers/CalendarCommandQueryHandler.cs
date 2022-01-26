@@ -69,8 +69,31 @@ public class CalendarCommandQueryHandler :
         return deleted;
     }
 
-    public Task<bool> HandleAsync(Commands.ChangeOneOffEvent command)
+    public async Task<bool> HandleAsync(Commands.ChangeOneOffEvent command)
     {
-        throw new NotImplementedException();
+        // NOTE: we don't seem to have have any business logic to execute upon changing
+        // a one-off event. So we don't go through the domain model and 'publish'
+        // the domain event directly from the handler
+        // NOTE: dunno if this 'shortcut' is a worthwhile optimization, though..
+        bool changed = await this.repo.SaveUpdatesAsync(
+            new List<DomainEvent>
+            {
+                new DomainEvent.OneOffEventChanged(
+                    command.EventId,
+                    command.CalendarId,
+                    command.NewEventTitle,
+                    command.NewEventSummary,
+                    command.NewEventDate,
+                    command.NewEventTimeFrame,
+                    command.NewEventTimeseetCode)
+            }
+        );
+
+        if (changed)
+        {
+            // TODO: dispatch domain events
+        }
+
+        return changed;
     }
 }

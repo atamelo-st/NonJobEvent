@@ -17,12 +17,9 @@ public class Calendar
 
     public Calendar(
         Guid id,
-        IReadOnlyList<OneOffEvent> oneOffEvents,
-        IReadOnlyList<RecurringEvent> recurringEvents)
+        IReadOnlyList<OneOffEvent>? oneOffEvents = null,
+        IReadOnlyList<RecurringEvent>? recurringEvents = null)
     {
-        ArgumentNullException.ThrowIfNull(oneOffEvents, nameof(oneOffEvents));
-        ArgumentNullException.ThrowIfNull(recurringEvents, nameof(recurringEvents));
-
         this.Id = id;
         
         this.oneOffEvents = BuildEventIndex(oneOffEvents, AddEvent);
@@ -31,9 +28,14 @@ public class Calendar
         this.domainEvents = new List<DomainEvent>();
 
         static Dictionary<Guid, TEvent> BuildEventIndex<TEvent>(
-            IReadOnlyList<TEvent> events,
+            IReadOnlyList<TEvent>? events,
             Func<Dictionary<Guid, TEvent>, TEvent, bool, bool> add) where TEvent : Event
         {
+            if (events is null)
+            {
+                return new();
+            }
+
             Dictionary<Guid, TEvent> index = new(events.Count);
 
             foreach (TEvent appointment in events)

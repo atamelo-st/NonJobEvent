@@ -25,6 +25,8 @@ public readonly record struct RecurrencePattern
         [NotNullWhen(true)] out RecurrencePattern? recurrencePattern,
         [NotNullWhen(false)] out string? errorMessage)
     {
+        // TODO: replace this check with a RRULE parser
+
         if (string.IsNullOrWhiteSpace(pattern))
         {
             recurrencePattern = null;
