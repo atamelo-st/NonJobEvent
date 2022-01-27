@@ -39,6 +39,19 @@ public abstract partial record DomainEvent
 
     public sealed record RecurringEventDeleted(RecurringEvent DeletedEvent, Calendar calendar) : DomainEvent;
 
+    // NOTE: 'null' communicates 'not changed'. In case 'null' is a ligit value, 
+    // we'll need to communicate 'not changed' with an extra field (flags?)
+    public sealed record RecurringEventChanged(
+        Guid ChangedEventId,
+        Guid CalendarId,
+        string? NewEventTitle,
+        string? NewEventSummary,
+        DateOnly? NewEventStartDate,
+        TimeFrame? NewEventTimeFrame,
+        int? NewEventTimeseetCode,
+        RecurrencePattern? NewRecurrencePattern
+    ) : DomainEvent;
+
     public sealed record RecurringEventOccurrenceDeleted(RecurringEvent ParentRecurringEvent, DateOnly Date, Calendar Calendar)
         : DomainEvent;
 
@@ -46,5 +59,8 @@ public abstract partial record DomainEvent
         : DomainEvent;
 
     public sealed record RecurringEventOccurrenceOverridden(Guid ParentRecurringEventId, DateOnly Date, Calendar calendar)
+        : DomainEvent;
+
+    public sealed record RecurringEventOccurrenceOverrideReverted(Guid ParentRecurringEventId, DateOnly Date, Calendar calendar)
         : DomainEvent;
 }

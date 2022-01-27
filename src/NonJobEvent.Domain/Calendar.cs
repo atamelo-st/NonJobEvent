@@ -1,5 +1,6 @@
 ﻿using NonJobEvent.Common;
 using NonJobEvent.Domain.DomainEvents;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace NonJobEvent.Domain;
@@ -38,7 +39,7 @@ public class Calendar
         return new(id, oneOffEvents, recurringEvents);
     }
 
-    public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly from, DateOnly to)
+    public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly dateFrom, DateOnly dateTo)
     {
         foreach (OneOffEvent oneOff in this.oneOffEvents.Values)
         {
@@ -49,9 +50,9 @@ public class Calendar
         {
             IEnumerable<RecurringEvent.Occurrence> occurrences =
                 recurringEvent
-                    .ExpandOccurrences(from, to)
+                    .ExpandOccurrences(dateFrom, dateTo)
                     // Skip deleted
-                    .Where(occurrence => !IsOccurrenceDeleted(occurrence))
+                    .Where(OccurrenceIsNotDeleted)
                     // Apply override if exists
                     .Select(ResolveOccurrenceOverride);
 
@@ -61,34 +62,37 @@ public class Calendar
             }
         }
 
-        bool IsOccurrenceDeleted(RecurringEvent.Occurrence occurrence) 
-            => this.IsRecurringEventOccurrenceDeleted(occurrence.Parent.Id, occurrence.Date);
+        bool OccurrenceIsNotDeleted(RecurringEvent.Occurrence occurrence) 
+            => !this.IsRecurringEventOccurrenceDeleted(occurrence.Parent.Id, occurrence.Date);
 
         RecurringEvent.Occurrence ResolveOccurrenceOverride(RecurringEvent.Occurrence occurrenceCandidate)
         {
-            if (!TryGetOverrides(occurrenceCandidate.Parent.Id, out var overrides))
-            {
-                return occurrenceCandidate;
-            }
+            RecurringEvent.Occurrence resolved =
+                OverrideExists(occurrenceCandidate, out RecurringEvent.Occurrence? @override) ?
+                @override :
+                occurrenceCandidate;
 
-            if (!TryGetOverride(overrides, overrideDate: occurrenceCandidate.Date, out RecurringEvent.Occurrence? @override))
-            {
-                return occurrenceCandidate;
-            }
-
-            return @override;
+            return resolved;
         }
 
-        bool TryGetOverrides(
-            Guid parentRecurringEventId, 
-            [NotNullWhen(true)] out Dictionary<DateOnly, RecurringEvent.Occurrence>? overrides)
-            => this.recurringOccurrencesOverrides.TryGetValue(parentRecurringEventId, out overrides);
-
-        bool TryGetOverride(
-            Dictionary<DateOnly, RecurringEvent.Occurrence> overrides,
-            DateOnly overrideDate,
+        bool OverrideExists(
+            RecurringEvent.Occurrence targetOccurrence,
             [NotNullWhen(true)] out RecurringEvent.Occurrence? @override)
-            => overrides.TryGetValue(overrideDate, out @override);
+        {
+            @override = null;
+
+            if (!this.recurringOccurrencesOverrides.TryGetValue(targetOccurrence.Parent.Id, out var overrides))
+            {
+                return false;
+            }
+
+            if (!overrides.TryGetValue(targetOccurrence.Date, out @override))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 
     public bool AddOneOffEvent(OneOffEvent oneOffEvent)
@@ -123,7 +127,7 @@ public class Calendar
         TimeFrame? newEventTimeFrame,
         int? newEventTimeseetCode)
     {
-        if (this.oneOffEvents.TryGetValue(oneOffEventId, out OneOffEvent? originalEvent) is false)
+        if (!this.OneOffEventExists(oneOffEventId, out OneOffEvent? originalEvent))
         {
             return false;
         }
@@ -165,13 +169,120 @@ public class Calendar
         return added;
     }
 
-    // TODO:flesh out ChangeRecurringEvent
-    public bool ChangeRecurringEvent(Guid recurringEventId)
+    public bool ChangeRecurringEvent(
+        Guid recurringEventId,
+        string? newEventTitle,
+        string? newEventSummary,
+        DateOnly? newEventStartDate,
+        TimeFrame? newEventTimeFrame,
+        int? newEventTimeseetCode,
+        RecurrencePattern? newRecurrencePattern)
     {
-        // TODO: how to handle deletes? e.g. simply clean-up those that don't fit the recurrence pattern?
-        // TODO: how to handle overrides?
+        if (!this.RecurringEventExists(recurringEventId, out RecurringEvent? originalEvent))
+        {
+            return false;
+        }
 
-        throw null!;
+        RecurringEvent changedEvent = new(
+            originalEvent.Id,
+            newEventTitle ?? originalEvent.Title,
+            newEventSummary ?? originalEvent.Summary,
+            newEventStartDate ?? originalEvent.StartDate,
+            newEventTimeFrame ?? originalEvent.TimeFrame,
+            newEventTimeseetCode ?? originalEvent.TimeseetCode,
+            newRecurrencePattern ?? originalEvent.Pattern
+        );
+
+        this.recurringEvents[recurringEventId] = changedEvent;
+
+        CleanupTombstonesAndOverrides(changedEvent);
+
+        this.PublishDomainEvent(
+            new DomainEvent.RecurringEventChanged(
+                ChangedEventId: recurringEventId,
+                CalendarId: this.Id,
+                NewEventTitle: newEventTitle,
+                NewEventSummary: newEventSummary,
+                NewEventStartDate: newEventStartDate,
+                NewEventTimeFrame: newEventTimeFrame,
+                NewEventTimeseetCode: newEventTimeseetCode,
+                NewRecurrencePattern: newRecurrencePattern)
+        );
+
+        return true;
+
+        void CleanupTombstonesAndOverrides(RecurringEvent changedEvent)
+        {
+            bool startDateChanged = newEventStartDate is not null && newEventStartDate.Value != originalEvent.StartDate;
+            bool recurrencePatternChanged = newRecurrencePattern is not null && newRecurrencePattern != originalEvent.Pattern;
+            bool needToCleanupTombstonesAndOverrides = startDateChanged || recurrencePatternChanged;
+
+            if (needToCleanupTombstonesAndOverrides)
+            {
+                CleanupTombstones(changedEvent);
+                CleanupOverrides(changedEvent);
+            }
+        }
+
+        void CleanupTombstones(RecurringEvent changedEvent)
+        {
+            if (!this.TombstonesExist(changedEvent.Id, out HashSet<DateOnly>? tombstones))
+            {
+                return;
+            }
+
+            // NOTE: clean up those that don't fit the recurrence pattern
+            List<DateOnly> tombstonesToCleanup = new();
+
+            foreach (DateOnly tombstonedDate in tombstones)
+            {
+                // NOTE: the expectations is that range [tombstonedDate; tombstonedDate]
+                // is enough for the underlying lib to be able to correctly expand the occurrence.
+                bool tombstoneMissesThePattern = !changedEvent.ExpandOccurrences(tombstonedDate, tombstonedDate).Any();
+
+                if (tombstoneMissesThePattern)
+                {
+                    tombstonesToCleanup.Add(tombstonedDate);
+                }
+            }
+
+            foreach (DateOnly tobmstoneToCleanup in tombstonesToCleanup)
+            {
+                // NOTE: we go through the API so that all the corresponding events
+                // are published and so all the state changes are recorded
+                bool cleanedup = this.UnDeleteRecurringEventOccurrence(changedEvent.Id, tobmstoneToCleanup);
+
+                Debug.Assert(cleanedup);
+            }
+        }
+
+        void CleanupOverrides(RecurringEvent changedEvent)
+        {
+            if (!this.RecurringEventOverridesExist(changedEvent.Id, out var overrides))
+            {
+                return;
+            }
+
+            // NOTE: clean up those that don't fit the recurrence pattern?
+            List<DateOnly> overridesToCleanup = new();
+
+            foreach (RecurringEvent.Occurrence @override in overrides.Values)
+            {
+                bool overrideMissesThePattern = !changedEvent.ExpandOccurrences(@override.Date, @override.Date).Any();
+
+                if (overrideMissesThePattern)
+                {
+                    overridesToCleanup.Add(@override.Date);
+                }
+            }
+
+            foreach (DateOnly overrideToCleanup in overridesToCleanup)
+            {
+                bool cleanedup = this.RevertRecurringEventOccurenceOverride(changedEvent.Id, overrideToCleanup);
+
+                Debug.Assert(cleanedup);
+            }
+        }
     }
 
     public bool DeleteRecurringEvent(Guid recurringEventId)
@@ -182,7 +293,6 @@ public class Calendar
         }
 
         this.recurringOccurrencesTombstones.Remove(recurringEventId);
-
         this.recurringOccurrencesOverrides.Remove(recurringEventId);
 
         this.PublishDomainEvent(new DomainEvent.RecurringEventDeleted(deletedRecurringEvent, calendar: this));
@@ -190,8 +300,9 @@ public class Calendar
         return true;
     }
 
-    // TODO: return smth more meaningful than just bool
+    // TODO: return smth more meaningful than just bool ?
     // to distinguesh between 'parent doens't exist' and 'occurrecnce already deleted'
+    // or rely on exceptions and just expect that the called does appropriate checks before calling the API?
     public bool DeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
     {
         if (!this.RecurringEventOccurrenceExists(parentRecurringEventId, date))
@@ -199,7 +310,9 @@ public class Calendar
             return false;
         }
 
-        if (!this.TryGetTombstones(parentRecurringEventId, out HashSet<DateOnly>? tombstones))
+        // NOTE: .Delete doesn't revert a potentially existing .Override.
+        // That way, after .UnDelete, the override remains
+        if (!this.TombstonesExist(parentRecurringEventId, out HashSet<DateOnly>? tombstones))
         {
             tombstones = new HashSet<DateOnly>();
 
@@ -226,12 +339,7 @@ public class Calendar
 
     public bool UnDeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
     {
-        if (!this.RecurringEventOccurrenceExists(parentRecurringEventId, date))
-        {
-            return false;
-        }
-
-        if (!this.TryGetTombstones(parentRecurringEventId, out var tombstones))
+        if (!this.TombstonesExist(parentRecurringEventId, out var tombstones))
         {
             return false;
         }
@@ -262,6 +370,7 @@ public class Calendar
         {
             return false;
         }
+
         // TODO: implement optimistic concurrency check for .DeleteOccurence and .OverrideOccurence
         // when saving the state to the DB - 'lock' on the parent event's version to avoid race condition
         if (this.IsRecurringEventOccurrenceDeleted(parentRecurringEventId, dateToOverride))
@@ -287,14 +396,37 @@ public class Calendar
         return true;
     }
 
-    public bool ResetRecurringEventOccurence()
+    public bool RevertRecurringEventOccurenceOverride(Guid parentRecurringEventId, DateOnly dateOfOverride)
     {
-        throw null!;
+        // TODO: any race condition check need to be implemented on persisting?
+        if (this.IsRecurringEventOccurrenceDeleted(parentRecurringEventId, dateOfOverride))
+        {
+            // to revert a deleted override it first needs to be un-deleted
+            return false;
+        }
+
+        if (!this.RecurringEventOverridesExist(parentRecurringEventId, out var overrides))
+        {
+            return false;
+        }
+
+        bool reverted = overrides.Remove(dateOfOverride);
+
+        if (reverted)
+        {
+            this.PublishDomainEvent(
+                new DomainEvent.RecurringEventOccurrenceOverrideReverted(
+                    parentRecurringEventId,
+                    dateOfOverride,
+                    calendar: this));
+        }
+
+        return reverted;
     }
 
     public bool RecurringEventOccurrenceExists(Guid parentRecurringEventId, DateOnly date)
     {
-        if (!this.TryGetRecurringEvent(parentRecurringEventId, out RecurringEvent? recurringEvent))
+        if (!this.RecurringEventExists(parentRecurringEventId, out RecurringEvent? recurringEvent))
         {
             return false;
         }
@@ -343,11 +475,19 @@ public class Calendar
         }
     }
 
-    private bool TryGetRecurringEvent(Guid recurringEventId, [NotNullWhen(true)] out RecurringEvent? recurringEvent)
+    private bool OneOffEventExists(Guid oneOffEvenId, [NotNullWhen(true)] out OneOffEvent? oneOffEvent)
+        => this.oneOffEvents.TryGetValue(oneOffEvenId, out oneOffEvent);
+
+    private bool RecurringEventExists(Guid recurringEventId, [NotNullWhen(true)] out RecurringEvent? recurringEvent)
         => this.recurringEvents.TryGetValue(recurringEventId, out recurringEvent);
 
-    private bool TryGetTombstones(Guid recurringEventId, [NotNullWhen(true)] out HashSet<DateOnly>? tombtones)
+    private bool TombstonesExist(Guid recurringEventId, [NotNullWhen(true)] out HashSet<DateOnly>? tombtones)
         => this.recurringOccurrencesTombstones.TryGetValue(recurringEventId, out tombtones);
+
+    private bool RecurringEventOverridesExist(
+        Guid recurringEventId,
+        [NotNullWhen(true)] out Dictionary<DateOnly, RecurringEvent.Occurrence>? overrides)
+        => this.recurringOccurrencesOverrides.TryGetValue(recurringEventId, out overrides);
 
     private static bool AddEvent<TEvent>(
         Dictionary<Guid, TEvent> events,
@@ -366,7 +506,7 @@ public class Calendar
 
     private bool IsRecurringEventOccurrenceDeleted(Guid parentRecurringEventId, DateOnly date)
     {
-        if (this.TryGetTombstones(parentRecurringEventId, out HashSet<DateOnly>? tombstones))
+        if (this.TombstonesExist(parentRecurringEventId, out HashSet<DateOnly>? tombstones))
         {
             bool deleted = tombstones.Contains(date);
 
