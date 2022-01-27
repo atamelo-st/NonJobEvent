@@ -1,6 +1,5 @@
 ﻿using NonJobEvent.Common;
 using NonJobEvent.Domain.DomainEvents;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace NonJobEvent.Domain;
@@ -10,6 +9,7 @@ public class Calendar
     private readonly Dictionary<Guid, OneOffEvent> oneOffEvents;
     private readonly Dictionary<Guid, RecurringEvent> recurringEvents;
     private readonly Dictionary<Guid, HashSet<DateOnly>> recurringOccurrencesTombstones;
+    private readonly Dictionary<Guid, Dictionary<DateTime, RecurringEvent.Occurrence>> recurringOccurrencesOverrides;
     private readonly List<DomainEvent> domainEvents;
 
     public Guid Id { get; }
@@ -23,6 +23,8 @@ public class Calendar
         return new(id);
     }
 
+    // TODO: add overrides
+    // TODO: add tombstones
     public static Calendar Load(
             Guid id,
             IReadOnlyList<OneOffEvent> oneOffEvents,
@@ -142,6 +144,15 @@ public class Calendar
         return added;
     }
 
+    // TODO:flesh out ChangeRecurringEvent
+    public bool ChangeRecurringEvent(Guid recurringEventId)
+    {
+        // TODO: how to handle deletes? e.g. simply clean-up those that don't fit the recurrence pattern?
+        // TODO: how to handle overrides?
+
+        throw null!;
+    }
+
     public bool DeleteRecurringEvent(Guid recurringEventId)
     {
         bool removed = this.recurringEvents.Remove(recurringEventId);
@@ -153,7 +164,7 @@ public class Calendar
 
         this.recurringOccurrencesTombstones.Remove(recurringEventId);
 
-        // TODO: delete overrides
+        this.recurringOccurrencesOverrides.Remove(recurringEventId);
 
         // TODO: publish the event
 
@@ -220,6 +231,16 @@ public class Calendar
         return undeleted;
     }
 
+    public bool OverrideRecurringEventOccurrence()
+    {
+        throw null!;
+    }
+
+    public bool ResetRecurringEventOccurence()
+    {
+        throw null!;
+    }
+
     public bool RecurringEventOccurrenceExists(Guid parentRecurringEventId, DateOnly date)
     {
         if (!this.TryGetRecurringEvent(parentRecurringEventId, out RecurringEvent? recurringEvent))
@@ -247,6 +268,7 @@ public class Calendar
 
         this.domainEvents = new List<DomainEvent>();
         this.recurringOccurrencesTombstones = new Dictionary<Guid, HashSet<DateOnly>>();
+        this.recurringOccurrencesOverrides = new Dictionary<Guid, Dictionary<DateTime, RecurringEvent.Occurrence>>();
 
         static Dictionary<Guid, TEvent> BuildEventIndex<TEvent>(
             IReadOnlyList<TEvent>? events,
