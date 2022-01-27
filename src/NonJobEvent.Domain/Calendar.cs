@@ -18,9 +18,13 @@ public class Calendar
 
     public static Calendar Create(Guid id)
     {
-        // TODO: publish 'CalendarCreated' event
+        Calendar calendar = new(id);
 
-        return new(id);
+        DomainEvent.CalendarCreated calendarCreated = new(id);
+
+        calendar.PublishDomainEvent(calendarCreated);
+
+        return calendar;
     }
 
     // TODO: add overrides
@@ -43,7 +47,7 @@ public class Calendar
             yield return OneOf.Those(oneOff);
         }
 
-        // TODO: add overrides, deletes
+        // TODO: add handling overrides
         foreach (RecurringEvent recurringEvent in this.recurringEvents.Values)
         {
             IEnumerable<RecurringEvent.Occurrence> occurrences =
