@@ -300,6 +300,14 @@ public class Calendar
         return true;
     }
 
+    // TODO: think if it's a worthwhile idea
+    public static void DeleteRecurringEventUnchecked(Guid recurringEventId)
+    {
+        // TODO: implement no-op deletion with event publishing
+        // to be able to track state changes without first reading
+        // calendar state from a repo
+    }
+
     // TODO: return smth more meaningful than just bool ?
     // to distinguesh between 'parent doens't exist' and 'occurrecnce already deleted'
     // or rely on exceptions and just expect that the called does appropriate checks before calling the API?
