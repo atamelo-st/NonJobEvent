@@ -26,8 +26,6 @@ public class Calendar
         return calendar;
     }
 
-    // TODO: add overrides
-    // TODO: add tombstones
     public static Calendar Load(
             Guid id,
             IReadOnlyList<OneOffEvent> oneOffEvents,
