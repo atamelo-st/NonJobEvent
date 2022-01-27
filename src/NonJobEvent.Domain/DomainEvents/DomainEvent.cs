@@ -15,6 +15,7 @@ public abstract partial record DomainEvent
         this.Id = Guid.NewGuid();
     }
 
+    // TODO: think if it's really needed
     public sealed record CalendarCreated(Guid CalendarId) : DomainEvent;
 
     // TODO: consider flattening event payload instead of directly using domain classes
