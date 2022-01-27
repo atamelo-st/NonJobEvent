@@ -9,7 +9,7 @@ public class Calendar
     private readonly Dictionary<Guid, OneOffEvent> oneOffEvents;
     private readonly Dictionary<Guid, RecurringEvent> recurringEvents;
     private readonly Dictionary<Guid, HashSet<DateOnly>> recurringOccurrencesTombstones;
-    private readonly Dictionary<Guid, Dictionary<DateTime, RecurringEvent.Occurrence>> recurringOccurrencesOverrides;
+    private readonly Dictionary<Guid, Dictionary<DateOnly, RecurringEvent.Occurrence>> recurringOccurrencesOverrides;
     private readonly List<DomainEvent> domainEvents;
 
     public Guid Id { get; }
@@ -20,9 +20,7 @@ public class Calendar
     {
         Calendar calendar = new(id);
 
-        DomainEvent.CalendarCreated calendarCreated = new(id);
-
-        calendar.PublishDomainEvent(calendarCreated);
+        calendar.PublishDomainEvent(new DomainEvent.CalendarCreated(id));
 
         return calendar;
     }
@@ -47,14 +45,15 @@ public class Calendar
             yield return OneOf.Those(oneOff);
         }
 
-        // TODO: add handling overrides
         foreach (RecurringEvent recurringEvent in this.recurringEvents.Values)
         {
             IEnumerable<RecurringEvent.Occurrence> occurrences =
                 recurringEvent
                     .ExpandOccurrences(from, to)
-                    //Skip deleted
-                    .Where(occurrence => !IsOccurrenceDeleted(occurrence));
+                    // Skip deleted
+                    .Where(occurrence => !IsOccurrenceDeleted(occurrence))
+                    // Apply override if exists
+                    .Select(ResolveOccurrenceOverride);
 
             foreach (RecurringEvent.Occurrence occurrence in occurrences)
             {
@@ -63,7 +62,33 @@ public class Calendar
         }
 
         bool IsOccurrenceDeleted(RecurringEvent.Occurrence occurrence) 
-            => this.IsOccurrenceDeleted(occurrence.Parent.Id, occurrence.Date);
+            => this.IsRecurringEventOccurrenceDeleted(occurrence.Parent.Id, occurrence.Date);
+
+        RecurringEvent.Occurrence ResolveOccurrenceOverride(RecurringEvent.Occurrence occurrenceCandidate)
+        {
+            if (!TryGetOverrides(occurrenceCandidate.Parent.Id, out var overrides))
+            {
+                return occurrenceCandidate;
+            }
+
+            if (!TryGetOverride(overrides, overrideDate: occurrenceCandidate.Date, out RecurringEvent.Occurrence? @override))
+            {
+                return occurrenceCandidate;
+            }
+
+            return @override;
+        }
+
+        bool TryGetOverrides(
+            Guid parentRecurringEventId, 
+            [NotNullWhen(true)] out Dictionary<DateOnly, RecurringEvent.Occurrence>? overrides)
+            => this.recurringOccurrencesOverrides.TryGetValue(parentRecurringEventId, out overrides);
+
+        bool TryGetOverride(
+            Dictionary<DateOnly, RecurringEvent.Occurrence> overrides,
+            DateOnly overrideDate,
+            [NotNullWhen(true)] out RecurringEvent.Occurrence? @override)
+            => overrides.TryGetValue(overrideDate, out @override);
     }
 
     public bool AddOneOffEvent(OneOffEvent oneOffEvent)
@@ -72,9 +97,7 @@ public class Calendar
 
         if (added)
         {
-            DomainEvent.OneOffEventAdded oneOffEventAdded = new(oneOffEvent, calendar: this);
-
-            this.PublishDomainEvent(oneOffEventAdded);
+            this.PublishDomainEvent(new DomainEvent.OneOffEventAdded(oneOffEvent, calendar: this));
         }
 
         return added;
@@ -86,9 +109,7 @@ public class Calendar
 
         if (removed)
         {
-            DomainEvent.OneOffEventDeleted oneOffEventDeleted = new(oneOffEventId, CalendarId: this.Id);
-
-            this.PublishDomainEvent(oneOffEventDeleted);
+            this.PublishDomainEvent(new DomainEvent.OneOffEventDeleted(oneOffEventId, CalendarId: this.Id));
         }
 
         return removed;
@@ -116,20 +137,18 @@ public class Calendar
             newEventTimeseetCode ?? originalEvent.TimeseetCode
         );
 
-        this.oneOffEvents.Remove(oneOffEventId);
-        this.oneOffEvents.Add(oneOffEventId, changedEvent);
+        this.oneOffEvents[oneOffEventId] = changedEvent;
 
-        DomainEvent.OneOffEventChanged oneOffEventChanged = new(
-            ChangedEventId: oneOffEventId,
-            CalendarId: this.Id,
-            NewEventTitle: newEventTitle,
-            NewEventSummary: newEventSummary,
-            NewEventDate: newEventDate,
-            NewEventTimeFrame: newEventTimeFrame,
-            NewEventTimeseetCode: newEventTimeseetCode
+        this.PublishDomainEvent(
+            new DomainEvent.OneOffEventChanged(
+                ChangedEventId: oneOffEventId,
+                CalendarId: this.Id,
+                NewEventTitle: newEventTitle,
+                NewEventSummary: newEventSummary,
+                NewEventDate: newEventDate,
+                NewEventTimeFrame: newEventTimeFrame,
+                NewEventTimeseetCode: newEventTimeseetCode)
         );
-
-        this.PublishDomainEvent(oneOffEventChanged);
 
         return true;
     }
@@ -140,9 +159,7 @@ public class Calendar
 
         if (added)
         {
-            DomainEvent.RecurringEventAdded recuringEventAdded = new(recurringEvent, calendar: this);
-
-            this.PublishDomainEvent(recuringEventAdded);
+            this.PublishDomainEvent(new DomainEvent.RecurringEventAdded(recurringEvent, calendar: this));
         }
 
         return added;
@@ -159,9 +176,7 @@ public class Calendar
 
     public bool DeleteRecurringEvent(Guid recurringEventId)
     {
-        bool removed = this.recurringEvents.Remove(recurringEventId);
-
-        if (removed is false)
+        if (!this.recurringEvents.Remove(recurringEventId, out RecurringEvent? deletedRecurringEvent))
         {
             return false;
         }
@@ -170,7 +185,7 @@ public class Calendar
 
         this.recurringOccurrencesOverrides.Remove(recurringEventId);
 
-        // TODO: publish the event
+        this.PublishDomainEvent(new DomainEvent.RecurringEventDeleted(deletedRecurringEvent, calendar: this));
 
         return true;
     }
@@ -190,7 +205,8 @@ public class Calendar
 
             this.recurringOccurrencesTombstones.Add(parentRecurringEventId, tombstones);
         }
-
+        // TODO: implement optimistic concurrency check for .DeleteOccurence and .OverrideOccurence
+        // when saving the state to the DB - 'lock' on the parent event's version to avoid race condition
         bool deleted = tombstones.Add(date);
 
         if (deleted)
@@ -199,7 +215,8 @@ public class Calendar
 
             DomainEvent.RecurringEventOccurrenceDeleted recurringEventOccurrenceDeleted = new (
                 parentRecurringEvent, 
-                date);
+                date,
+                Calendar: this);
 
             this.PublishDomainEvent(recurringEventOccurrenceDeleted);
         }
@@ -227,7 +244,8 @@ public class Calendar
 
             DomainEvent.RecurringEventOccurrenceUnDeleted recurringEventOccurrenceUnDeleted = new(
                 parentRecurringEvent,
-                date);
+                date,
+                Calendar: this);
 
             this.PublishDomainEvent(recurringEventOccurrenceUnDeleted);
         }
@@ -235,9 +253,38 @@ public class Calendar
         return undeleted;
     }
 
-    public bool OverrideRecurringEventOccurrence()
+    public bool OverrideRecurringEventOccurrence(
+        Guid parentRecurringEventId,
+        DateOnly dateToOverride,
+        RecurringEvent.Occurrence overridingOccurence)
     {
-        throw null!;
+        if (!this.RecurringEventOccurrenceExists(parentRecurringEventId, dateToOverride))
+        {
+            return false;
+        }
+        // TODO: implement optimistic concurrency check for .DeleteOccurence and .OverrideOccurence
+        // when saving the state to the DB - 'lock' on the parent event's version to avoid race condition
+        if (this.IsRecurringEventOccurrenceDeleted(parentRecurringEventId, dateToOverride))
+        {
+            return false;
+        }
+
+        if (!this.recurringOccurrencesOverrides.TryGetValue(parentRecurringEventId, out var overrides))
+        {
+            overrides = new();
+
+            this.recurringOccurrencesOverrides.Add(parentRecurringEventId, overrides);
+        }
+
+        overrides[dateToOverride] = overridingOccurence;
+
+        this.PublishDomainEvent(
+            new DomainEvent.RecurringEventOccurrenceOverridden(
+                parentRecurringEventId,
+                dateToOverride,
+                calendar: this));
+
+        return true;
     }
 
     public bool ResetRecurringEventOccurence()
@@ -272,7 +319,7 @@ public class Calendar
 
         this.domainEvents = new List<DomainEvent>();
         this.recurringOccurrencesTombstones = new Dictionary<Guid, HashSet<DateOnly>>();
-        this.recurringOccurrencesOverrides = new Dictionary<Guid, Dictionary<DateTime, RecurringEvent.Occurrence>>();
+        this.recurringOccurrencesOverrides = new Dictionary<Guid, Dictionary<DateOnly, RecurringEvent.Occurrence>>();
 
         static Dictionary<Guid, TEvent> BuildEventIndex<TEvent>(
             IReadOnlyList<TEvent>? events,
@@ -317,7 +364,7 @@ public class Calendar
         return added;
     }
 
-    private bool IsOccurrenceDeleted(Guid parentRecurringEventId, DateOnly date)
+    private bool IsRecurringEventOccurrenceDeleted(Guid parentRecurringEventId, DateOnly date)
     {
         if (this.TryGetTombstones(parentRecurringEventId, out HashSet<DateOnly>? tombstones))
         {

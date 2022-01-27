@@ -37,7 +37,14 @@ public abstract partial record DomainEvent
     // TODO: consider flattening event payload instead of directly using domain classes
     public sealed record RecurringEventAdded(RecurringEvent AddedEvent, Calendar calendar) : DomainEvent;
 
-    public sealed record RecurringEventOccurrenceDeleted(RecurringEvent ParentRecurringEvent, DateOnly Date) : DomainEvent;
+    public sealed record RecurringEventDeleted(RecurringEvent DeletedEvent, Calendar calendar) : DomainEvent;
 
-    public sealed record RecurringEventOccurrenceUnDeleted(RecurringEvent ParentRecurringEvent, DateOnly Date) : DomainEvent;
+    public sealed record RecurringEventOccurrenceDeleted(RecurringEvent ParentRecurringEvent, DateOnly Date, Calendar Calendar)
+        : DomainEvent;
+
+    public sealed record RecurringEventOccurrenceUnDeleted(RecurringEvent ParentRecurringEvent, DateOnly Date, Calendar Calendar)
+        : DomainEvent;
+
+    public sealed record RecurringEventOccurrenceOverridden(Guid ParentRecurringEventId, DateOnly Date, Calendar calendar)
+        : DomainEvent;
 }
