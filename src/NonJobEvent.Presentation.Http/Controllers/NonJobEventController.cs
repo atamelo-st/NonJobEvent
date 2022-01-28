@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using NonJobEvent.Application;
+using NonJobEvent.Application.Api;
 using NonJobEvent.Common;
 using NonJobEvent.Domain;
 using NonJobEvent.Presentation.Http.Controllers;
@@ -25,30 +26,42 @@ namespace NonJobAppointment.WebApi.Controllers
         }
 
         [HttpGet("get-calendar-events")]
-        public IActionResult Get(Queries.GetCalendarEvents query)
+        public async Task<IActionResult> Get(
+            Queries.GetCalendarEvents query,
+            [FromServices] QueryHandler<Queries.GetCalendarEvents, Result.OfQuery<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>> getCalendarEvents)
         {
-            // TODO: move this to a query handler
-            Calendar calendar = null!; // await this.calendarRepo.GetCalendarAsync(query.CalendarId, query.From, query.To);
+            var queryResult = await getCalendarEvents(query);
 
-            IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events =
-                calendar
-                    .GetEvents(query.From, query.To)
-                    .ToList();
+            return queryResult switch
+            {
+                Result.OfQuery.Success<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> success
+                    => base.Ok(ConvertSuccess(query.CalendarId, success.Data)),
 
-            IEnumerable<ViewModel.Event> eventViewModels =
-                events
-                    .Select(@event =>
-                        @event.TheOne switch
-                        {
-                            OneOffEvent oneOff => OneOffViewModel(from: oneOff),
-                            RecurringEvent.Occurrence occurrence => OccurrenceViewModel(from: occurrence),
-                            _ => throw BadMatch.ShouldNotHappen(),
-                        })
-                    .ToList();
+                Result.OfQuery.Failure.NotFound notFound => base.NotFound($"{notFound.Message}"),
 
-            ViewModel.CalendarSlice result = new(query.CalendarId, eventViewModels);
+                // TODO: add helper
+                _ => throw null!
+            } ;
 
-            return Ok(result);
+            static ViewModel.CalendarSlice ConvertSuccess(
+                Guid calendarId,
+                IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events)
+            {
+                IEnumerable<ViewModel.Event> eventViewModels =
+                    events
+                        .Select(@event =>
+                            @event.TheOne switch
+                            {
+                                OneOffEvent oneOff => OneOffViewModel(from: oneOff),
+                                RecurringEvent.Occurrence occurrence => OccurrenceViewModel(from: occurrence),
+                                _ => throw BadMatch.ShouldNotHappen(),
+                            })
+                        .ToList();
+
+                ViewModel.CalendarSlice result = new(calendarId, eventViewModels);
+
+                return result;
+            }
 
             static ViewModel.Event OneOffViewModel(OneOffEvent from)
                 => new ViewModel.Event.OneOff(from.Id, from.Title, from.Summary, from.Date, from.TimeseetCode,

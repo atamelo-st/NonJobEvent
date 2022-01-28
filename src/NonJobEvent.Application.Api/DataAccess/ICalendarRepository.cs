@@ -5,7 +5,7 @@ namespace NonJobEvent.Application.Api.DataAccess;
 
 public interface ICalendarRepository
 {
-    Task<Calendar> GetCalendarAsync(Guid calendarId, DateOnly from, DateOnly to);
+    Task<Calendar?> GetCalendarAsync(Guid calendarId, DateOnly dateFrom, DateOnly dateTo);
 
-    Task<bool> SaveUpdatesAsync(IReadOnlyList<DomainEvent> updates);
+    Task<Result.OfCommand> SaveUpdatesAsync(IReadOnlyList<DomainEvent> updates);
 }

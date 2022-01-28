@@ -39,6 +39,8 @@ public class Calendar
 
     public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly dateFrom, DateOnly dateTo)
     {
+        // TODO: add filtering logic to skip events that are ouside of [dateFrom; dateTo] range
+
         foreach (OneOffEvent oneOff in this.oneOffEvents.Values)
         {
             yield return OneOf.Those(oneOff);
