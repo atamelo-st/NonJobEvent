@@ -26,11 +26,18 @@ public abstract record Result
 
             internal Success(TData data) => this.Data = data;
         }
+
+        public static class OfFailure
+        {
+            public static NotFoundFailure NotFound(string message = "Not found.") => new(message);
+
+            public sealed record NotFoundFailure(string Message) : Result.OfQuery, OfQuery.Failure.NotFound;
+        }
     }
 
     public abstract record OfQuery<TExpectedData> : OfQuery
     {
-        public static class OfFailure
+        new public static class OfFailure
         {
             public static Failure.NotFound NotFound(string message = "Not found.") => new(message);
         }
@@ -46,6 +53,9 @@ public abstract record Result
                 internal NotFound(string message) : base(message) { }
             }
         }
+
+        public static implicit operator OfQuery<TExpectedData>(Result.OfQuery.OfFailure.NotFoundFailure notFound)
+            => Result.OfQuery<TExpectedData>.OfFailure.NotFound(notFound.Message);
     }
 
     public abstract record OfCommand : Result
@@ -106,4 +116,7 @@ public abstract record Result
         {
         }
     }
+
+    public static ArgumentException FailedToMatch(Result result)
+        => new(string.Format("Failed to match Result of type {0}.", result.GetType().FullName));
 }

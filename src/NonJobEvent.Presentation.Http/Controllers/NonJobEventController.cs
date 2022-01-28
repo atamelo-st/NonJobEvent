@@ -37,26 +37,23 @@ namespace NonJobAppointment.WebApi.Controllers
                 Result.OfQuery.Success<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> success
                     => base.Ok(ConvertSuccess(query.CalendarId, success.Data)),
 
-                Result.OfQuery.Failure.NotFound notFound => base.NotFound($"{notFound.Message}"),
+                Result.OfQuery.Failure.NotFound notFound
+                    => base.NotFound($"{notFound.Message}"),
 
-                // TODO: add helper
-                _ => throw null!
+                _ => throw Result.FailedToMatch(queryResult)
             } ;
 
             static ViewModel.CalendarSlice ConvertSuccess(
                 Guid calendarId,
                 IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events)
             {
-                IEnumerable<ViewModel.Event> eventViewModels =
-                    events
-                        .Select(@event =>
-                            @event.TheOne switch
-                            {
-                                OneOffEvent oneOff => OneOffViewModel(from: oneOff),
-                                RecurringEvent.Occurrence occurrence => OccurrenceViewModel(from: occurrence),
-                                _ => throw BadMatch.ShouldNotHappen(),
-                            })
-                        .ToList();
+                IEnumerable<ViewModel.Event> eventViewModels = events.Select(@event => 
+                    @event.TheOne switch
+                    {
+                        OneOffEvent oneOff => OneOffViewModel(from: oneOff),
+                        RecurringEvent.Occurrence occurrence => OccurrenceViewModel(from: occurrence),
+                        _ => throw BadMatch.ShouldNotHappen(),
+                    }).ToList();
 
                 ViewModel.CalendarSlice result = new(calendarId, eventViewModels);
 

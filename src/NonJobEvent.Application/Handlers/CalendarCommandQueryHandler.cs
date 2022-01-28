@@ -26,7 +26,10 @@ public class CalendarCommandQueryHandler :
         if (calendar is null)
         {
             // TODO: think is the type can be avoided with implicit conversion
-            return Result.OfQuery<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>.OfFailure.NotFound();
+
+            return Result.OfQuery.OfFailure.NotFound();
+
+            // return Result.OfQuery<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>.OfFailure.NotFound();
         }
 
         IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events = calendar.GetEvents(query.DateFrom, query.DateTo);
