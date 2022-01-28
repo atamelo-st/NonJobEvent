@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using NonJobEvent.Application;
 using NonJobEvent.Common;
 using NonJobEvent.Domain;
-using NonJobEvent.Presenation.Api.DataAccess;
 using NonJobEvent.Presentation.Http.Controllers;
 
 namespace NonJobAppointment.WebApi.Controllers
@@ -11,14 +10,11 @@ namespace NonJobAppointment.WebApi.Controllers
     [Route("[controller]")]
     public class NonJobEventController : ControllerBase
     {
-        private readonly ICalendarRepository calendarRepo;
         private readonly ILogger<NonJobEventController> logger;
 
         public NonJobEventController(
-            ICalendarRepository calendarRepo,
             ILogger<NonJobEventController> logger)
         {
-            this.calendarRepo = calendarRepo;
             this.logger = logger;
         }
 
@@ -29,10 +25,10 @@ namespace NonJobAppointment.WebApi.Controllers
         }
 
         [HttpGet("get-calendar-events")]
-        public async Task<IActionResult> Get(Queries.GetCalendarEvents query)
+        public IActionResult Get(Queries.GetCalendarEvents query)
         {
             // TODO: move this to a query handler
-            Calendar calendar = await this.calendarRepo.GetCalendarAsync(query.CalendarId, query.From, query.To);
+            Calendar calendar = null!; // await this.calendarRepo.GetCalendarAsync(query.CalendarId, query.From, query.To);
 
             IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events =
                 calendar

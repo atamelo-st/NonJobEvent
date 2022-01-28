@@ -1,7 +1,6 @@
-﻿using System;
+﻿using NonJobEvent.Application.Api.DataAccess;
 using NonJobEvent.Domain;
 using NonJobEvent.Domain.DomainEvents;
-using NonJobEvent.Presenation.Api.DataAccess;
 
 namespace NonJobEvent.Application.Handlers;
 

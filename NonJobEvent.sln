@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Common", "src\N
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Application", "src\NonJobEvent.Application\NonJobEvent.Application.csproj", "{5228B100-2585-4DAC-B0A1-DF59F7CE84A2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Presentation.Api", "src\NonJobEvent.Presentation.Api\NonJobEvent.Presentation.Api.csproj", "{C575439F-68DB-4FAD-BCB5-62B763B17576}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonJobEvent.Application.Api", "src\NonJobEvent.Application.Api\NonJobEvent.Application.Api.csproj", "{E42CC38A-60CA-462E-A468-FDBE296F0722}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,10 +43,10 @@ Global
 		{5228B100-2585-4DAC-B0A1-DF59F7CE84A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5228B100-2585-4DAC-B0A1-DF59F7CE84A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5228B100-2585-4DAC-B0A1-DF59F7CE84A2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C575439F-68DB-4FAD-BCB5-62B763B17576}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C575439F-68DB-4FAD-BCB5-62B763B17576}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C575439F-68DB-4FAD-BCB5-62B763B17576}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C575439F-68DB-4FAD-BCB5-62B763B17576}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E42CC38A-60CA-462E-A468-FDBE296F0722}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E42CC38A-60CA-462E-A468-FDBE296F0722}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E42CC38A-60CA-462E-A468-FDBE296F0722}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E42CC38A-60CA-462E-A468-FDBE296F0722}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -57,7 +57,7 @@ Global
 		{A23B687E-96C7-4F64-99B4-F20342F43314} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
 		{931CFB3E-1F1E-4353-91B2-E5BF086AF7EC} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
 		{5228B100-2585-4DAC-B0A1-DF59F7CE84A2} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
-		{C575439F-68DB-4FAD-BCB5-62B763B17576} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
+		{E42CC38A-60CA-462E-A468-FDBE296F0722} = {755B5DCB-A3E7-43FB-A17E-09F2B70EA09D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EA17C3D3-F22B-447A-809F-DB4B8B75F164}

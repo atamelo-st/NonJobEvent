@@ -1,7 +1,7 @@
 ﻿using NonJobEvent.Domain;
 using NonJobEvent.Domain.DomainEvents;
 
-namespace NonJobEvent.Presenation.Api.DataAccess;
+namespace NonJobEvent.Application.Api.DataAccess;
 
 public interface ICalendarRepository
 {
