@@ -4,26 +4,21 @@ public abstract record Try
 {
     public static Success<TData> SucceedWith<TData>(TData data) => new(data);
 
-    public static Failure<TFailure> FailWith<TFailure>(TFailure failure) where TFailure : Try.Failure
-        => new(failure);
+    public static Failure<TFailure> FailWith<TFailure>(TFailure failure) => new(failure);
 
     public abstract record Of<TExpectedData>
     {
-        public static Failure<TFailure> FailWith<TFailure>(TFailure failure) where TFailure : Try.Failure
-            => new(failure);
+        public static Failure<TFailure> FailWith<TFailure>(TFailure failure) => new(failure);
 
         public sealed record Failure<TFailure>(TFailure FailedWith) : Try.Of<TExpectedData>, Failure
-            where TFailure : Try.Failure
         {
-            public static implicit operator Try.Of<TExpectedData>.Failure<TFailure>(Try.Failure<TFailure> failure)
-                => new(failure.FailedWith);
+            public static implicit operator Failure<TFailure>(Try.Failure<TFailure> failure) => new(failure.FailedWith);
         }
     }
 
     public sealed record Success<TData>(TData Data) : Try.Of<TData>, Success;
 
-    public sealed record Failure<TFailure>(TFailure FailedWith) : Try.Of<TFailure>, Failure
-        where TFailure : Try.Failure;
+    public sealed record Failure<TFailure>(TFailure FailedWith) : Try.Of<TFailure>, Failure;
 
     public interface Success
     {
@@ -57,11 +52,11 @@ public class Test
         };
     }
 
-    public abstract record Http : Try.Failure
+    public abstract record Http
     {
         public static Failure.NotFound NotFound(int code) => new(code);
 
-        public abstract record Failure : Try.Failure
+        public abstract record Failure
         {
             public record NotFound(int Code) : Failure;
         }
