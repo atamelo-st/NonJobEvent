@@ -32,7 +32,7 @@ public class Test
     {
         Try.Success r0 = Try.SucceedWith(1);
         Try.Of<string> r1 = Try.SucceedWith("Hello");
-        Try.Of<string> r2 = Try.Of<string>.FailWith(Http.NotFound(4)); // Result<string>.OfFailure(new Http.NotFound(3));
+        Try.Of<string> r2 = Try.Of<string>.FailWith(Http.NotFound(4));
         Try.Of<string>.Failure<Http.Failure.NotFound> r3 = Try.FailWith(Http.NotFound(4));
         Try.Of<string> r4 = r3;
         Try.Of<string> r5 = Try.Of<string>.FailWith(Http.NotFound(4));
@@ -41,9 +41,18 @@ public class Test
         {
             Try.Success<string> success => "",
             Try.Success => "",
-            Try.Of<string>.Failure<Http.Failure.NotFound> notFound => $"{notFound.FailedWith.Code}",
+            Try.Of<string>.Failure<Http.Failure.NotFound> failure and { FailedWith.Code: 4 } => $"{4}",
+            Try.Of<string>.Failure<Http.Failure.NotFound> failure => $"{failure.FailedWith.Code}",
             // Try.Failure<Http.Failure.NotFound> notFounf => "nf",
             Try.Failure => "failure",
+            _ => throw new NotImplementedException(),
+        };
+
+        Try.Failure<Http.Failure.NotFound> r6 = Try.FailWith(Http.NotFound(7));
+
+        string s2 = r6 switch
+        {
+            Try.Failure<Http.Failure.NotFound> notFounf => "nf",
             _ => throw new NotImplementedException(),
         };
     }
