@@ -6,6 +6,14 @@ public abstract record Try
 
     public static Failure<TFailure> FailWith<TFailure>(TFailure failure) => new(failure);
 
+    public interface Success { }
+
+    public interface Failure { }
+
+    public sealed record Success<TData>(TData Data) : Try.Of<TData>, Success;
+
+    public sealed record Failure<TFailure>(TFailure FailedWith) : Try.Of<TFailure>, Failure;
+
     public abstract record Of<TExpectedData>
     {
         public static Failure<TFailure> FailWith<TFailure>(TFailure failure) => new(failure);
@@ -14,18 +22,6 @@ public abstract record Try
         {
             public static implicit operator Failure<TFailure>(Try.Failure<TFailure> failure) => new(failure.FailedWith);
         }
-    }
-
-    public sealed record Success<TData>(TData Data) : Try.Of<TData>, Success;
-
-    public sealed record Failure<TFailure>(TFailure FailedWith) : Try.Of<TFailure>, Failure;
-
-    public interface Success
-    {
-    }
-
-    public interface Failure
-    {
     }
 }
 
