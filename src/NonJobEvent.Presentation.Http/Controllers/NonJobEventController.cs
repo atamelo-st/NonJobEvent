@@ -28,20 +28,13 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpGet("get-calendar-events")]
         public async Task<IActionResult> Get(
             Queries.GetCalendarEvents query,
-            [FromServices] QueryHandler<Queries.GetCalendarEvents, Result.OfQuery<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>> getCalendarEvents)
+            [FromServices] QueryHandler<Queries.GetCalendarEvents, IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> getCalendarEvents)
         {
-            var queryResult = await getCalendarEvents(query);
+            IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> queryResult = await getCalendarEvents(query);
 
-            return queryResult switch
-            {
-                Result.OfQuery.Success<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> success
-                    => base.Ok(ConvertSuccess(query.CalendarId, success.Data)),
+            ViewModel.CalendarSlice viewModel = ConvertSuccess(query.CalendarId, queryResult);
 
-                Result.OfQuery.Failure.NotFound notFound
-                    => base.NotFound($"{notFound.Message}"),
-
-                _ => throw Result.FailedToMatch(queryResult)
-            } ;
+            return base.Ok(viewModel);
 
             static ViewModel.CalendarSlice ConvertSuccess(
                 Guid calendarId,
