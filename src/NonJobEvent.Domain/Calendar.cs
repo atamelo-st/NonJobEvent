@@ -48,6 +48,7 @@ public class Calendar
 
         foreach (RecurringEvent recurringEvent in this.recurringEvents.Values)
         {
+            // TODO: think about how to preserve "deleted" and "overridden" flags
             IEnumerable<RecurringEvent.Occurrence> occurrences =
                 recurringEvent
                     .ExpandOccurrences(dateFrom, dateTo)

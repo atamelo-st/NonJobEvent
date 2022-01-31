@@ -30,7 +30,9 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpGet("get-calendar-events")]
         public async Task<IActionResult> Get(
             Queries.GetCalendarEvents query,
-            [FromServices] QueryHandler<Queries.GetCalendarEvents, IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> getCalendarEvents)
+            [FromServices] QueryHandler<
+                Queries.GetCalendarEvents,
+                IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> getCalendarEvents)
         {
             IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events = await getCalendarEvents(query);
 

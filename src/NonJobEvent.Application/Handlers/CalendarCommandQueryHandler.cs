@@ -3,14 +3,15 @@ using NonJobEvent.Application.Api.DataAccess;
 using NonJobEvent.Common;
 using NonJobEvent.Domain;
 using NonJobEvent.Domain.DomainEvents;
+using System.Diagnostics;
 
 namespace NonJobEvent.Application.Handlers;
 
 public class CalendarCommandQueryHandler :
-    IQueryHandler<Queries.GetCalendarEvents, IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>,
-    ICommandHandler<Commands.AddOneOffEvent, bool>,
-    ICommandHandler<Commands.DeleteOneOffEvent, bool>,
-    ICommandHandler<Commands.ChangeOneOffEvent, bool>
+    IQueryHandler<Queries.GetCalendarEvents, DataAccess.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>>,
+    ICommandHandler<Commands.AddOneOffEvent, DataAccess.Result.Version>,
+    ICommandHandler<Commands.DeleteOneOffEvent, Common.Void>,
+    ICommandHandler<Commands.ChangeOneOffEvent, DataAccess.Result.Version>
 {
     private readonly ICalendarRepository repo;
 
@@ -19,18 +20,34 @@ public class CalendarCommandQueryHandler :
         this.repo = repo;
     }
 
-    public async Task<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> HandleAsync(Queries.GetCalendarEvents query)
+    public async Task<DataAccess.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>>
+        HandleAsync(Queries.GetCalendarEvents query)
     {
-        Calendar calendar = await repo.GetCalendarAsync(query.CalendarId, query.DateFrom, query.DateTo);
+        DataAccess.Result<Calendar> dataAccessResult = 
+            await repo.GetCalendarAsync(
+                query.CalendarId, 
+                query.DateFrom,
+                query.DateTo);
 
-        IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events = calendar.GetEvents(query.DateFrom, query.DateTo);
+        Calendar calendar = dataAccessResult.Item;
 
-        return events;
+        IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events = 
+            calendar.GetEvents(
+                query.DateFrom,
+                query.DateTo);
+
+        return DataAccess.Result.From(events, dataAccessResult.Versions);
     }
 
-    public async Task<bool> HandleAsync(Commands.AddOneOffEvent command)
+    public async Task<DataAccess.Result.Version> HandleAsync(Commands.AddOneOffEvent command)
     {
-        Calendar calendar = await this.repo.GetCalendarAsync(command.CalendarId, command.EventDate, command.EventDate);
+        DataAccess.Result<Calendar> dataAcessResult = 
+            await this.repo.GetCalendarAsync(
+                command.CalendarId,
+                command.EventDate, 
+                command.EventDate);
+
+        Calendar calendar = dataAcessResult.Item;
 
         OneOffEvent oneOffEvent = new(
             command.EventId,
@@ -45,46 +62,49 @@ public class CalendarCommandQueryHandler :
 
         if (added is false)
         {
-            return false;
+            throw DataAccess.AlreadyExists($"Event with Id={command.EventId} already exists in calendar Id={command.CalendarId}");
         }
 
-        int recordsAffected = await this.repo.SaveUpdatesAsync(calendar.DomainEvents);
+        DataAccess.Result<int> dataAccessResult = await this.repo.SaveUpdatesAsync(calendar.DomainEvents);
+
+        int rowsAffected = dataAccessResult.Item;
+        Debug.Assert(rowsAffected > 0);
+
+        DataAccess.Result.Version version = dataAccessResult.Versions.Get(command.EventId);
 
         // TODO: dispatch domain events
 
-        return recordsAffected > 0;
+        return version;
     }
 
-    public async Task<bool> HandleAsync(Commands.DeleteOneOffEvent command)
+    public async Task<Common.Void> HandleAsync(Commands.DeleteOneOffEvent command)
     {
         // NOTE: we don't seem to have have any business logic to execute upon deleting
         // a one-off event. So we don't go through the domain model and 'publish'
         // the domain event directly from the handler
         // NOTE: dunno if this 'shortcut' is a worthwhile optimization, though..
-        int recordsAffected = await this.repo.SaveUpdatesAsync(
+        DataAccess.Result<int> dataAccessResult = await this.repo.SaveUpdatesAsync(
             new List<DomainEvent> 
             { 
                 new DomainEvent.OneOffEventDeleted(command.CalendarId, command.EventId)
             }
         );
 
-        bool deleted = recordsAffected > 0;
+        int rowsAffected = dataAccessResult.Item;
+        Debug.Assert(rowsAffected > 0);
 
-        if (deleted)
-        {
-            // TODO: dispatch domain events
-        }
+        // TODO: dispatch domain events
 
-        return deleted;
+        return Common.Void.Self();
     }
 
-    public async Task<bool> HandleAsync(Commands.ChangeOneOffEvent command)
+    public async Task<DataAccess.Result.Version> HandleAsync(Commands.ChangeOneOffEvent command)
     {
         // NOTE: we don't seem to have have any business logic to execute upon changing
         // a one-off event. So we don't go through the domain model and 'publish'
         // the domain event directly from the handler
         // NOTE: dunno if this 'shortcut' is a worthwhile optimization, though..
-        int recordsAffected = await this.repo.SaveUpdatesAsync(
+       DataAccess.Result<int> dataAccessResult = await this.repo.SaveUpdatesAsync(
             new List<DomainEvent>
             {
                 new DomainEvent.OneOffEventChanged(
@@ -98,13 +118,13 @@ public class CalendarCommandQueryHandler :
             }
         );
 
-        bool changed = recordsAffected > 0;
+        int rowsAffected = dataAccessResult.Item;
+        Debug.Assert(rowsAffected > 0);
 
-        if (changed)
-        {
-            // TODO: dispatch domain events
-        }
+        // TODO: dispatch domain events
 
-        return changed;
+        DataAccess.Result.Version updatedVersion = dataAccessResult.Versions.Get(command.EventId);
+
+        return updatedVersion;
     }
 }
