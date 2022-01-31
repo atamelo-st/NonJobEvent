@@ -7,6 +7,8 @@ using NonJobEvent.Presentation.Http.Controllers;
 
 namespace NonJobAppointment.WebApi.Controllers
 {
+    // TODO: add exception filter
+    // TODO: add controller base class?
     [ApiController]
     [Route("[controller]")]
     public class NonJobEventController : ControllerBase
@@ -30,13 +32,13 @@ namespace NonJobAppointment.WebApi.Controllers
             Queries.GetCalendarEvents query,
             [FromServices] QueryHandler<Queries.GetCalendarEvents, IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> getCalendarEvents)
         {
-            IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> queryResult = await getCalendarEvents(query);
+            IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events = await getCalendarEvents(query);
 
-            ViewModel.CalendarSlice viewModel = ConvertSuccess(query.CalendarId, queryResult);
+            ViewModel.CalendarSlice viewModel = EventsToViewModel(query.CalendarId, events);
 
             return base.Ok(viewModel);
 
-            static ViewModel.CalendarSlice ConvertSuccess(
+            static ViewModel.CalendarSlice EventsToViewModel(
                 Guid calendarId,
                 IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events)
             {
@@ -48,9 +50,9 @@ namespace NonJobAppointment.WebApi.Controllers
                         _ => throw BadMatch.ShouldNotHappen(),
                     }).ToList();
 
-                ViewModel.CalendarSlice result = new(calendarId, eventViewModels);
+                ViewModel.CalendarSlice viewModel = new(calendarId, eventViewModels);
 
-                return result;
+                return viewModel;
             }
 
             static ViewModel.Event OneOffViewModel(OneOffEvent from)

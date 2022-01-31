@@ -29,5 +29,5 @@ public abstract partial record ViewModel
         ) : Event;
     }
 
-    public record CalendarSlice(Guid CalendarId, IEnumerable<Event> events) : ViewModel;
+    public record CalendarSlice(Guid CalendarId, IEnumerable<ViewModel.Event> events) : ViewModel;
 }
