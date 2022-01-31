@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NonJobEvent.Application.Api\NonJobEvent.Application.Api.csproj" />
+    <ProjectReference Include="..\NonJobEvent.Common\NonJobEvent.Common.csproj" />
     <ProjectReference Include="..\NonJobEvent.Domain\NonJobEvent.Domain.csproj" />
     <ProjectReference Include="..\NonJobEvent.Application\NonJobEvent.Application.csproj" />
   </ItemGroup>

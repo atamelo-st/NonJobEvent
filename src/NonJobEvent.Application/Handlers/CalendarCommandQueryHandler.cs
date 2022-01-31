@@ -62,7 +62,7 @@ public class CalendarCommandQueryHandler :
 
         if (added is false)
         {
-            throw DataAccess.AlreadyExists($"Event with Id={command.EventId} already exists in calendar Id={command.CalendarId}");
+            throw DataAccess.EventAlreadyExists(command.CalendarId, command.EventId);
         }
 
         DataAccess.Result<int> dataAccessResult = await this.repo.SaveUpdatesAsync(calendar.DomainEvents);

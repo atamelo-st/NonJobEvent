@@ -10,6 +10,7 @@ public interface ICalendarRepository
     Task<DataAccess.Result<int>> SaveUpdatesAsync(IReadOnlyList<DomainEvent> updates);
 }
 
+// TODO: 'Persistence' ?
 public abstract class DataAccess
 {
     public record Result(Result.VersionData Versions)
@@ -26,10 +27,7 @@ public abstract class DataAccess
         {
             private readonly Dictionary<Guid, Version> versions;
 
-            public VersionData()
-            {
-                this.versions = new();
-            }
+            public VersionData() => this.versions = new();
 
             public void Add(Guid id, Version version) => this.versions.Add(id, version);
 
@@ -38,6 +36,12 @@ public abstract class DataAccess
     }
 
     public sealed record Result<TItem>(TItem Item, Result.VersionData Versions): Result(Versions);
+
+    public static Exception.AlreadyExists EventAlreadyExists(
+        Guid calendarId,
+        Guid eventId,
+        System.Exception? innerExeption = null)
+            => AlreadyExists($"Event with Id={eventId} already exists in calendar Id={calendarId}.", innerExeption);
 
     public static Exception.NotFound NotFound(
         string message,
