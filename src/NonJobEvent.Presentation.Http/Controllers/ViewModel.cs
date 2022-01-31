@@ -17,6 +17,7 @@ public abstract partial record ViewModel
             TimeOnly? EndTime = null
         ) : Event;
 
+        // TODO: optimize the payload: include only overrides, 'nest' the overrides inside the 'parent'
         public record RecurringOccurrence(
             Guid ParentId,
             string Title,

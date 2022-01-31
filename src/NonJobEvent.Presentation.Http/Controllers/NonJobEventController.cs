@@ -23,12 +23,6 @@ namespace NonJobAppointment.WebApi.Controllers
             this.logger = logger;
         }
 
-        [HttpPut]
-        public IActionResult Create()
-        {
-            throw new NotImplementedException();
-        }
-
         [HttpGet("get-calendar-events")]
         public async Task<IActionResult> Get(
             Queries.GetCalendarEvents query,
