@@ -23,7 +23,18 @@ namespace NonJobAppointment.WebApi.Controllers
             this.logger = logger;
         }
 
-        [HttpGet("get-calendar-events")]
+        [HttpGet("stream-calendar-events")]
+        public IAsyncEnumerable<object> Stream(
+            Queries.GetCalendarEvents query,
+            [FromServices] QueryHandler<
+                Queries.GetCalendarEvents,
+                DataAccess.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent>>>> getCalendarEvents)
+        {
+            // TODO: design app-level streaming protocol for the calendar event objects
+            throw new NotImplementedException();
+        }
+
+            [HttpGet("get-calendar-events")]
         public async Task<IActionResult> Get(
             Queries.GetCalendarEvents query,
             [FromServices] QueryHandler<

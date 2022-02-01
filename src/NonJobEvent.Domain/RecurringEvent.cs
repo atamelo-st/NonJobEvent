@@ -7,6 +7,7 @@ public sealed record RecurringEvent : Event
     public DateOnly StartDate { get; }
     public RecurrencePattern Pattern { get; }
 
+    // TODO: add reference to the Calendar that this event is defined for
     public RecurringEvent(
         Guid id,
         string title,
@@ -22,6 +23,8 @@ public sealed record RecurringEvent : Event
         this.Pattern = pattern;
     }
 
+    // TODO: add logic to expand deletes/overrides via the reference to the 'parent' calendar
+    // this should enable streaming scenarios
     public IEnumerable<Occurrence> ExpandOccurrences(DateOnly from, DateOnly to)
     {
         // TODO: check that 'to - from <= some_time'
@@ -50,8 +53,11 @@ public sealed record RecurringEvent : Event
         return occurs;
     }
 
+    // TODO: shouldn't we have also DeletedOccurence and OverriddenOccurence?
+    // to do so rename Occurence -> RegularOccurence and make Occurence the base class for all the three
     public sealed record Occurrence
     {
+        // TODO: do we really need this Parent?
         public RecurringEvent Parent { get; }
         public DateOnly Date { get; }
         public string Title { get; }

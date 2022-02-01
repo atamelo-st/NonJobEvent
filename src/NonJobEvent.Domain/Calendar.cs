@@ -37,6 +37,9 @@ public class Calendar
         return new(id, oneOffEvents, recurringEvents);
     }
 
+    // TODO: rename this API to smth like 'ExpandEvents'
+    // TODO: create new GetEvents API that;d be streaming-friendly
+    // i.e. return non-expanded RecurringEvents - so that they can be expanded 'externally' by the streaming app layer
     public IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> GetEvents(DateOnly dateFrom, DateOnly dateTo)
     {
         // TODO: add filtering logic to skip events that are ouside of [dateFrom; dateTo] range
@@ -96,6 +99,7 @@ public class Calendar
         }
     }
 
+    // TODO: pass data via parameters instead of OneOffEvent object
     public bool AddOneOffEvent(OneOffEvent oneOffEvent)
     {
         bool added = AddEvent(this.oneOffEvents, oneOffEvent, throwOnDuplicates: false);
@@ -158,6 +162,7 @@ public class Calendar
         return true;
     }
 
+    // TODO: pass data via parameters instead of RecurringEvent object
     public bool AddRecurringEvent(RecurringEvent recurringEvent)
     {
         bool added  = AddEvent(this.recurringEvents, recurringEvent, throwOnDuplicates: false);
