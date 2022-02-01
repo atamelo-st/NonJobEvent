@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NonJobEvent.Domain;
 
-public class Calendar
+public partial class Calendar
 {
     private readonly Dictionary<Guid, OneOffEvent> oneOffEvents;
     private readonly Dictionary<Guid, RecurringEvent> recurringEvents;
@@ -100,9 +100,9 @@ public class Calendar
     }
 
     // TODO: pass data via parameters instead of OneOffEvent object
-    public bool AddOneOffEvent(OneOffEvent oneOffEvent)
+    public bool TryAddOneOffEvent(OneOffEvent oneOffEvent)
     {
-        bool added = AddEvent(this.oneOffEvents, oneOffEvent, throwOnDuplicates: false);
+        bool added = AddEvent(events: this.oneOffEvents, calendarId: this.Id, oneOffEvent, throwOnDuplicates: false);
 
         if (added)
         {
@@ -112,7 +112,18 @@ public class Calendar
         return added;
     }
 
-    public bool DeleteOneOffEvent(Guid oneOffEventId)
+    // TODO: pass data via parameters instead of OneOffEvent object
+    public void AddOneOffEvent(OneOffEvent oneOffEvent)
+    { 
+        bool added = this.TryAddOneOffEvent(oneOffEvent);
+
+        if (added is false)
+        {
+            throw DuplicateEvent(this.Id, oneOffEvent.Id);
+        }
+    }
+
+    public bool TryDeleteOneOffEvent(Guid oneOffEventId)
     {
         bool removed = this.oneOffEvents.Remove(oneOffEventId);
 
@@ -124,7 +135,17 @@ public class Calendar
         return removed;
     }
 
-    public bool ChangeOneOffEvent(
+    public void DeleteOneOffEvent(Guid oneOffEventId)
+    {
+        bool removed = this.TryDeleteOneOffEvent(oneOffEventId);
+
+        if (removed is false)
+        {
+            throw EventNotFound(this.Id, oneOffEventId);
+        }
+    }
+
+    public bool TryChangeOneOffEvent(
         Guid oneOffEventId,
         string? newEventTitle,
         string? newEventSummary,
@@ -162,10 +183,32 @@ public class Calendar
         return true;
     }
 
-    // TODO: pass data via parameters instead of RecurringEvent object
-    public bool AddRecurringEvent(RecurringEvent recurringEvent)
+    public void ChangeOneOffEvent(
+        Guid oneOffEventId,
+        string? newEventTitle,
+        string? newEventSummary,
+        DateOnly? newEventDate,
+        TimeFrame? newEventTimeFrame,
+        int? newEventTimeseetCode)
     {
-        bool added  = AddEvent(this.recurringEvents, recurringEvent, throwOnDuplicates: false);
+        bool changed = this.TryChangeOneOffEvent(
+            oneOffEventId,
+            newEventTitle,
+            newEventSummary,
+            newEventDate,
+            newEventTimeFrame,
+            newEventTimeseetCode);
+
+        if (!changed)
+        {
+            throw EventNotFound(this.Id, oneOffEventId);
+        }
+    }
+
+    // TODO: pass data via parameters instead of RecurringEvent object
+    public bool TryAddRecurringEvent(RecurringEvent recurringEvent)
+    {
+        bool added  = AddEvent(events: this.recurringEvents, calendarId: this.Id, recurringEvent, throwOnDuplicates: false);
 
         if (added)
         {
@@ -173,6 +216,17 @@ public class Calendar
         }
 
         return added;
+    }
+
+    // TODO: pass data via parameters instead of RecurringEvent object
+    public void AddRecurringEvent(RecurringEvent recurringEvent)
+    {
+        bool added = this.TryAddRecurringEvent(recurringEvent);
+
+        if (added is false)
+        {
+            throw EventNotFound(this.Id, recurringEvent.Id);
+        }
     }
 
     public bool ChangeRecurringEvent(
@@ -256,7 +310,7 @@ public class Calendar
             {
                 // NOTE: we go through the API so that all the corresponding events
                 // are published and so all the state changes are recorded
-                bool cleanedup = this.UnDeleteRecurringEventOccurrence(changedEvent.Id, tobmstoneToCleanup);
+                bool cleanedup = this.TryUnDeleteRecurringEventOccurrence(changedEvent.Id, tobmstoneToCleanup);
 
                 Debug.Assert(cleanedup);
             }
@@ -284,14 +338,14 @@ public class Calendar
 
             foreach (DateOnly overrideToCleanup in overridesToCleanup)
             {
-                bool cleanedup = this.RevertRecurringEventOccurenceOverride(changedEvent.Id, overrideToCleanup);
+                bool cleanedup = this.TryRevertRecurringEventOccurenceOverride(changedEvent.Id, overrideToCleanup);
 
                 Debug.Assert(cleanedup);
             }
         }
     }
 
-    public bool DeleteRecurringEvent(Guid recurringEventId)
+    public bool TryDeleteRecurringEvent(Guid recurringEventId)
     {
         if (!this.recurringEvents.Remove(recurringEventId, out RecurringEvent? deletedRecurringEvent))
         {
@@ -306,18 +360,21 @@ public class Calendar
         return true;
     }
 
-    // TODO: think if it's a worthwhile idea
-    public static void DeleteRecurringEventUnchecked(Guid recurringEventId)
+    public void DeleteRecurringEvent(Guid recurringEventId)
     {
-        // TODO: implement no-op deletion with event publishing
-        // to be able to track state changes without first reading
-        // calendar state from a repo
+        bool deleted = this.TryDeleteRecurringEvent(recurringEventId);
+
+        if (deleted is false)
+        {
+            throw EventNotFound(this.Id, recurringEventId);
+        }
     }
 
     // TODO: return smth more meaningful than just bool ?
     // to distinguesh between 'parent doens't exist' and 'occurrecnce already deleted'
     // or rely on exceptions and just expect that the called does appropriate checks before calling the API?
-    public bool DeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
+    // or just compose the error message with "this OR that happened" :)
+    public bool TryDeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
     {
         if (!this.RecurringEventOccurrenceExists(parentRecurringEventId, date))
         {
@@ -351,7 +408,7 @@ public class Calendar
         return deleted;
     }
 
-    public bool UnDeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
+    public bool TryUnDeleteRecurringEventOccurrence(Guid parentRecurringEventId, DateOnly date)
     {
         if (!this.TombstonesExist(parentRecurringEventId, out var tombstones))
         {
@@ -375,7 +432,7 @@ public class Calendar
         return undeleted;
     }
 
-    public bool OverrideRecurringEventOccurrence(
+    public bool TryOverrideRecurringEventOccurrence(
         Guid parentRecurringEventId,
         DateOnly dateToOverride,
         RecurringEvent.Occurrence overridingOccurence)
@@ -410,7 +467,7 @@ public class Calendar
         return true;
     }
 
-    public bool RevertRecurringEventOccurenceOverride(Guid parentRecurringEventId, DateOnly dateOfOverride)
+    public bool TryRevertRecurringEventOccurenceOverride(Guid parentRecurringEventId, DateOnly dateOfOverride)
     {
         // TODO: any race condition check need to be implemented on persisting?
         if (this.IsRecurringEventOccurrenceDeleted(parentRecurringEventId, dateOfOverride))
@@ -450,6 +507,8 @@ public class Calendar
         return exists;
     }
 
+    public bool OneOffEventExists(Guid oneOffEvenId) => this.oneOffEvents.TryGetValue(oneOffEvenId, out _);
+
     public void AcknowledgeDomainEvents()
         => this.domainEvents.Clear();
 
@@ -460,16 +519,17 @@ public class Calendar
     {
         this.Id = id;
 
-        this.oneOffEvents = BuildEventIndex(oneOffEvents, AddEvent);
-        this.recurringEvents = BuildEventIndex(recurringEvents, AddEvent);
+        this.oneOffEvents = BuildEventIndex(id, oneOffEvents, AddEvent);
+        this.recurringEvents = BuildEventIndex(id, recurringEvents, AddEvent);
 
         this.domainEvents = new List<DomainEvent>();
         this.recurringOccurrencesTombstones = new Dictionary<Guid, HashSet<DateOnly>>();
         this.recurringOccurrencesOverrides = new Dictionary<Guid, Dictionary<DateOnly, RecurringEvent.Occurrence>>();
 
         static Dictionary<Guid, TEvent> BuildEventIndex<TEvent>(
+            Guid calendarId,
             IReadOnlyList<TEvent>? events,
-            Func<Dictionary<Guid, TEvent>, TEvent, bool, bool> add) where TEvent : Event
+            Func<Dictionary<Guid, TEvent>, Guid, TEvent, bool, bool> add) where TEvent : Event
         {
             if (events is null)
             {
@@ -478,11 +538,11 @@ public class Calendar
 
             Dictionary<Guid, TEvent> index = new(events.Count);
 
-            foreach (TEvent appointment in events)
+            foreach (TEvent @event in events)
             {
                 const bool throwOnDuplicates = true;
 
-                add(index, appointment, throwOnDuplicates);
+                add(index, calendarId, @event, throwOnDuplicates);
             }
 
             return index;
@@ -505,14 +565,15 @@ public class Calendar
 
     private static bool AddEvent<TEvent>(
         Dictionary<Guid, TEvent> events,
+        Guid calendarId,
         TEvent @event,
         bool throwOnDuplicates) where TEvent : Event
     {
         bool added = events.TryAdd(@event.Id, @event);
 
-        if (added is not true && throwOnDuplicates)
+        if (added is false && throwOnDuplicates)
         {
-            throw EventAlreadyExists(@event.Id);
+            throw DuplicateEvent(calendarId, @event.Id);
         }
 
         return added;
@@ -532,9 +593,6 @@ public class Calendar
 
     private void PublishDomainEvent(DomainEvent domainEvent)
         => this.domainEvents.Add(domainEvent);
-
-    private static ArgumentException EventAlreadyExists(Guid id)
-        => new($"Event with Id={id} already exists.");
 
     private class EventEqualityComparer : IEqualityComparer<Event>
     {
@@ -557,4 +615,34 @@ public class Calendar
         public int GetHashCode([DisallowNull] Event appointment)
             => appointment.Id.GetHashCode();
     }
+}
+
+public partial class Calendar
+{
+    public abstract class Exception : System.Exception
+    {
+        public Exception(string message, System.Exception? innerException = null) : base(message, innerException) { }
+
+        public class DuplicateEvent : Calendar.Exception
+        {
+            public DuplicateEvent(string message) : base(message) { }
+        }
+
+        public class EventNotFound : Calendar.Exception
+        {
+            public EventNotFound(string message) : base(message) { }
+        }
+    }
+
+    public static Calendar.Exception.DuplicateEvent DuplicateEvent(Guid calendarId, Guid eventId)
+        => new($"Event Id={eventId} already exists in calendar Id={calendarId}");
+
+    public static Calendar.Exception.DuplicateEvent EventNotFound(Guid calendarId, Guid eventId)
+        => new($"Event Id={eventId} not found in calendar Id={calendarId}");
+}
+
+// TODO: move all the private methods here?
+public partial class Calendar
+{
+
 }
