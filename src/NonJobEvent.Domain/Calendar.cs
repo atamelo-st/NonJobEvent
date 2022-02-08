@@ -26,6 +26,8 @@ public partial class Calendar
         return calendar;
     }
 
+    // TODO: this method doesn't seem to be really helpful. Will need to just use caledar's
+    // .AddOneOffEvent & .AddRecurringEvent
     public static Calendar Load(
             Guid id,
             IReadOnlyList<OneOffEvent> oneOffEvents,
