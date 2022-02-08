@@ -1,17 +1,17 @@
 ﻿using NonJobEvent.Domain;
 using NonJobEvent.Domain.DomainEvents;
 
-namespace NonJobEvent.Application.Api.DataAccess;
+namespace NonJobEvent.Application.Api;
 
 public interface ICalendarRepository
 {
-    Task<DataAccess.Result<Calendar>> GetCalendarAsync(Guid calendarId, DateOnly dateFrom, DateOnly dateTo);
+    Task<Persistence.Result<Calendar>> GetCalendarAsync(Guid calendarId, DateOnly dateFrom, DateOnly dateTo);
 
-    Task<DataAccess.Result<int>> SaveUpdatesAsync(IReadOnlyList<DomainEvent> updates);
+    Task<Persistence.Result<int>> SaveUpdatesAsync(IReadOnlyList<DomainEvent> updates);
 }
 
-// TODO: 'Persistence' ?
-public abstract class DataAccess
+
+public abstract class Persistence
 {
     public record Result(Result.VersionData Versions)
     {
@@ -57,21 +57,21 @@ public abstract class DataAccess
 
     public abstract class Exception : System.Exception
     {
-        public sealed class NotFound : DataAccess.Exception
+        public sealed class NotFound : Persistence.Exception
         {
             public NotFound(
                 string message, 
                 System.Exception? innerException = null) : base(message, innerException) { }
         }
 
-        public sealed class AlreadyExists : DataAccess.Exception
+        public sealed class AlreadyExists : Persistence.Exception
         {
             public AlreadyExists(
                 string message,
                 System.Exception? innerException = null) : base(message, innerException) { }
         }
 
-        public sealed class ConcurrencyConflict : DataAccess.Exception
+        public sealed class ConcurrencyConflict : Persistence.Exception
         {
             public ConcurrencyConflict(
                 string message,

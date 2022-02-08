@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using NonJobEvent.Application;
 using NonJobEvent.Application.Api;
-using NonJobEvent.Application.Api.DataAccess;
 using NonJobEvent.Common;
 using NonJobEvent.Domain;
 using NonJobEvent.Presentation.Http.Controllers;
@@ -28,7 +27,7 @@ namespace NonJobAppointment.WebApi.Controllers
             Queries.GetCalendarEvents query,
             [FromServices] QueryHandler<
                 Queries.GetCalendarEvents,
-                DataAccess.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent>>>> getCalendarEvents)
+                Persistence.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent>>>> getCalendarEvents)
         {
             // TODO: design app-level streaming protocol for the calendar event objects
             throw new NotImplementedException();
@@ -37,7 +36,7 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpGet("get-calendar-events")]
         public async Task<IActionResult> Get(
             Queries.GetCalendarEvents query,
-            [FromServices] QueryHandler<Queries.GetCalendarEvents, DataAccess.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>> getCalendarEvents)
+            [FromServices] QueryHandler<Queries.GetCalendarEvents, Persistence.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>> getCalendarEvents)
         {
             var eventData = await getCalendarEvents(query);
 
@@ -47,7 +46,7 @@ namespace NonJobAppointment.WebApi.Controllers
 
             static ViewModel.CalendarSlice EventsToViewModel(
                 Guid calendarId,
-                DataAccess.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> eventsData)
+                Persistence.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>> eventsData)
             {
                 IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>> events = eventsData.Item;
                 
@@ -64,11 +63,11 @@ namespace NonJobAppointment.WebApi.Controllers
                 return viewModel;
             }
 
-            static ViewModel.Event OneOffViewModel(OneOffEvent from, DataAccess.Result.VersionData versions)
+            static ViewModel.Event OneOffViewModel(OneOffEvent from, Persistence.Result.VersionData versions)
                 => new ViewModel.Event.OneOff(from.Id, from.Title, from.Summary, from.Date, from.TimeseetCode,
                     from.TimeFrame.IsAllDay, from.TimeFrame.StartTime, from.TimeFrame.EndTime);
 
-            static ViewModel.Event OccurrenceViewModel(RecurringEvent.Occurrence from, DataAccess.Result.VersionData versions)
+            static ViewModel.Event OccurrenceViewModel(RecurringEvent.Occurrence from, Persistence.Result.VersionData versions)
                 => new ViewModel.Event.RecurringOccurrence(from.Parent.Id, from.Title, from.Summary, from.Date,
                     from.Parent.TimeseetCode, from.TimeFrame.IsAllDay, from.TimeFrame.StartTime, from.TimeFrame.EndTime);
         }
@@ -76,9 +75,9 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpPut("add-oneoff-event")]
         public async Task<IActionResult> AddOneOffEvent(
             Commands.AddOneOffEvent command,
-            [FromServices] CommandHandler<Commands.AddOneOffEvent, DataAccess.Result.Version> addOneOffEvent)
+            [FromServices] CommandHandler<Commands.AddOneOffEvent, Persistence.Result.Version> addOneOffEvent)
         {
-            DataAccess.Result.Version version = await addOneOffEvent(command);
+            Persistence.Result.Version version = await addOneOffEvent(command);
 
             // TODO: do proper result handling, version propagation, etc
             return Ok(version.Value);
@@ -97,9 +96,9 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpPut("change-oneoff-event")]
         public async Task<IActionResult> ChangeOneOffEvent(
             Commands.ChangeOneOffEvent command,
-            [FromServices] CommandHandler<Commands.ChangeOneOffEvent, DataAccess.Result.Version> changeOneOffEvent)
+            [FromServices] CommandHandler<Commands.ChangeOneOffEvent, Persistence.Result.Version> changeOneOffEvent)
         {
-            DataAccess.Result.Version updatedVersion = await changeOneOffEvent(command);
+            Persistence.Result.Version updatedVersion = await changeOneOffEvent(command);
 
             return Ok(updatedVersion.Value);
         }
