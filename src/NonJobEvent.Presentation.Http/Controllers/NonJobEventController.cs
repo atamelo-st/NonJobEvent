@@ -34,12 +34,10 @@ namespace NonJobAppointment.WebApi.Controllers
             throw new NotImplementedException();
         }
 
-            [HttpGet("get-calendar-events")]
+        [HttpGet("get-calendar-events")]
         public async Task<IActionResult> Get(
             Queries.GetCalendarEvents query,
-            [FromServices] QueryHandler<
-                Queries.GetCalendarEvents,
-                DataAccess.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>> getCalendarEvents)
+            [FromServices] QueryHandler<Queries.GetCalendarEvents, DataAccess.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>> getCalendarEvents)
         {
             var eventData = await getCalendarEvents(query);
 
