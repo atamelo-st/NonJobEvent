@@ -17,6 +17,7 @@ public sealed record TimeFrame
     public TimeSpan Duration => this.IsAllDay ? throw CantGetTimeForAllDayEvent() : duration;
     public bool IsAllDay => this.isAllDay;
 
+    // DL: could you use `TimeSpan` here instead of requiring `duration` to be passed in as number of minutes?
     public static TimeFrame From(TimeOnly startTime, uint durationInMinutes)
     {
         if (!TryFrom(startTime, durationInMinutes, out var timeFrame, out var errorMessage))
@@ -40,6 +41,7 @@ public sealed record TimeFrame
     {
         TimeOnly endTime = startTime.AddMinutes(durationInMinutes, out int wrappedDays);
 
+        // DL: why couldn't an event carry over until the next day? Something like an emergency job that starts at 11 PM and ends at 1 AM?
         if (wrappedDays > 0)
         {
             timeFrame = null;
