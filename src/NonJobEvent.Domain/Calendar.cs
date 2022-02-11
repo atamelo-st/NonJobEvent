@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NonJobEvent.Domain;
 
+// DL: what's the benefit of having 3 instances of `public partial class Calendar`?
 public partial class Calendar
 {
     private readonly Dictionary<Guid, OneOffEvent> oneOffEvents;
