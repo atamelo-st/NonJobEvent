@@ -7,6 +7,7 @@ public sealed record RecurringEvent : Event
     public DateOnly StartDate { get; }
     public RecurrencePattern Pattern { get; }
 
+    // DL: would the `RecurrencePattern` include `startDate`? Would `timeFrame` be necessary?
     // TODO: add reference to the Calendar that this event is defined for
     public RecurringEvent(
         Guid id,
