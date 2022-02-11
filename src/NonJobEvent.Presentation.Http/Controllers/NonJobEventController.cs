@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using NonJobEvent.Application;
 using NonJobEvent.Application.Api;
+using NonJobEvent.Application.Handlers;
 using NonJobEvent.Common;
 using NonJobEvent.Domain;
 using NonJobEvent.Presentation.Http.Controllers;
@@ -25,9 +26,7 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpGet("stream-calendar-events")]
         public IAsyncEnumerable<object> Stream(
             Queries.GetCalendarEvents query,
-            [FromServices] QueryHandler<
-                Queries.GetCalendarEvents,
-                Persistence.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent>>>> getCalendarEvents)
+            [FromServices] IGetCalendarEventsQueryHandler getCalendarEvents)
         {
             // TODO: design app-level streaming protocol for the calendar event objects
             throw new NotImplementedException();
@@ -36,9 +35,9 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpGet("get-calendar-events")]
         public async Task<IActionResult> Get(
             Queries.GetCalendarEvents query,
-            [FromServices] QueryHandler<Queries.GetCalendarEvents, Persistence.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>> getCalendarEvents)
+            [FromServices] IGetCalendarEventsQueryHandler getCalendarEvents)
         {
-            var eventData = await getCalendarEvents(query);
+            var eventData = await getCalendarEvents.HandleAsync(query);
 
             ViewModel.CalendarSlice viewModel = EventsToViewModel(query.CalendarId, eventData);
 
@@ -75,9 +74,9 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpPut("add-oneoff-event")]
         public async Task<IActionResult> AddOneOffEvent(
             Commands.AddOneOffEvent command,
-            [FromServices] CommandHandler<Commands.AddOneOffEvent, Persistence.Result.Version> addOneOffEvent)
+            [FromServices] IAddOneOffEventCommandHandler addOneOffEvent)
         {
-            Persistence.Result.Version version = await addOneOffEvent(command);
+            Persistence.Result.Version version = await addOneOffEvent.HandleAsync(command);
 
             // TODO: do proper result handling, version propagation, etc
             return Ok(version.Value);
@@ -86,9 +85,9 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpPut("delete-oneoff-event")]
         public async Task<IActionResult> DeleteOneOffEvent(
             Commands.DeleteOneOffEvent command,
-            [FromServices] CommandHandler<Commands.DeleteOneOffEvent, Void> deleteOneOffEvent)
+            [FromServices] IDeleteOneOffEventCommandHandler deleteOneOffEvent)
         {
-            await deleteOneOffEvent(command);
+            await deleteOneOffEvent.HandleAsync(command);
 
             return Ok();
         }
@@ -96,9 +95,9 @@ namespace NonJobAppointment.WebApi.Controllers
         [HttpPut("change-oneoff-event")]
         public async Task<IActionResult> ChangeOneOffEvent(
             Commands.ChangeOneOffEvent command,
-            [FromServices] CommandHandler<Commands.ChangeOneOffEvent, Persistence.Result.Version> changeOneOffEvent)
+            [FromServices] IChangeOneOffEventCommandHandler changeOneOffEvent)
         {
-            Persistence.Result.Version updatedVersion = await changeOneOffEvent(command);
+            Persistence.Result.Version updatedVersion = await changeOneOffEvent.HandleAsync(command);
 
             return Ok(updatedVersion.Value);
         }
