@@ -6,6 +6,9 @@ using System.Diagnostics;
 
 namespace NonJobEvent.Application.Handlers;
 
+// DL: when looking at functions that consume `IQueryHandler`/`ICommandHandler` in the controllers, I felt some cognitive overload,
+// particularly with nested types (like `IQueryHandler<Queries.GetCalendarEvents, Persistence.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>>`).
+// What do you think of explicitly-named interfaces instead?
 public interface IGetCalendarEventsQueryHandler
     : IQueryHandler<Queries.GetCalendarEvents, Persistence.Result<IEnumerable<OneOf<OneOffEvent, RecurringEvent.Occurrence>>>> { }
 
